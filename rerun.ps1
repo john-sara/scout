@@ -17,7 +17,7 @@ $v1 = Get-ChildItem results\run-*.json | Sort-Object LastWriteTime | Select-Obje
 if (-not $v1) { Fail "No earlier benchmark run was found in the results folder." }
 
 Step "1/6 Run the tests"
-& $py -m unittest discover -s tests -t . 2>&1 | Select-Object -Last 4
+& $py -m unittest discover -s tests -t .
 if ($LASTEXITCODE -ne 0) { Fail "Some tests failed." }
 
 Step "2/6 Ollama (local models)"
