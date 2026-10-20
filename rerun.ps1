@@ -72,12 +72,17 @@ if ($useOllama) {
     if ($LASTEXITCODE -ne 0) { Write-Host "The local-model run failed. The Claude results are still saved." -ForegroundColor Yellow }
 } else { Step "6/6 Local model skipped" }
 
+Step "Building the results page"
+& $py evals\report.py
+if ($LASTEXITCODE -ne 0) { Write-Host "The results page could not be built. Tell Claude." -ForegroundColor Yellow }
+
 Step "Restarting the app with the fixes"
 Get-CimInstance Win32_Process -Filter "Name = 'python.exe'" | Where-Object { $_.CommandLine -like "*run.py*" } |
     ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
 Start-Process $py -ArgumentList "run.py" -WorkingDirectory $PSScriptRoot
 Start-Sleep -Seconds 4
 Start-Process "http://localhost:8000"
+Start-Process (Join-Path $PSScriptRoot "results\report.html")
 Write-Host ""
 Write-Host "All done. Go back to Claude and say done. Leave this window open so the app keeps its key." -ForegroundColor Green
 Stop-Transcript | Out-Null

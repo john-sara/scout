@@ -47,6 +47,8 @@ python evals/run_eval.py --models ollama:llama3.1 --judge anthropic:claude-sonne
 
 Each question is run through the agent and graded by a judge model against the reference answer. The report has answer score, whether it abstains on unanswerable questions, whether it cites a correct page, p50 and p95 latency, tokens, cost per question, and a list of every answer that was not fully correct with the judge's reason. `--max-cost` stops the run if spending passes a limit.
 
+`python evals/report.py` builds `results/report.html` from the saved runs: a one-page summary of the model comparison, the retrieval comparison and the remaining failures.
+
 Results from the latest run go here.
 
 ## Limits
