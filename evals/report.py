@@ -72,40 +72,54 @@ def retrieval_rows():
 
 
 CSS = """
-:root{--bg:#faf8f5;--card:#fff;--ink:#1f1b18;--body:#3d3631;--muted:#6b625a;--hair:#e7e1d9;--walnut:#3b2b22;--rust:#9c3d17;--accent:#c2561b;--sand:#efe7dc}
+:root{--bg:#fff;--ink:#0d0d0d;--body:#2b2b2b;--muted:#6b6b6b;--hair:#e8e8e8;--soft:#f5f5f4;--lime:#d4f45a;--night:#111;--banner:#c9d3ea;
+--c1:#ff9d70;--c2:#b8aeff;--c3:#d4f45a;--c4:#9fd8ff;--c5:#ffb5d0;--c6:#ffe37a;
+--display:'Inter Tight','Inter',-apple-system,sans-serif;--ui:'Inter',-apple-system,'Segoe UI',sans-serif}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Inter,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1040px;margin:0 auto;padding:56px 32px 72px}
-.eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-h1{font-size:clamp(40px,6vw,64px);font-weight:500;letter-spacing:-.045em;line-height:1;margin-top:10px}
-.lede{margin-top:16px;max-width:640px;color:var(--body);font-size:18px}
-.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
-.chip{font-size:13px;padding:4px 12px;border:1px solid var(--hair);border-radius:999px;background:var(--card);color:var(--muted)}
-.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:40px}
-.stat{border-radius:14px;padding:26px;background:var(--card);border:1px solid var(--hair)}
-.stat.rust{background:var(--rust);border-color:var(--rust);color:#fff}
-.stat.dark{background:var(--walnut);border-color:var(--walnut);color:#fff}
-.stat .big{font-size:56px;line-height:1;font-weight:500;letter-spacing:-.05em}
-.stat .cap{margin-top:12px;font-size:14px;line-height:1.45;color:var(--muted)}
-.stat.rust .cap,.stat.dark .cap{color:rgba(255,255,255,.85)}
-h2{font-size:26px;font-weight:500;letter-spacing:-.03em;margin:56px 0 6px}
-.sub{color:var(--muted);font-size:15px;margin-bottom:18px;max-width:680px}
-table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--hair);border-radius:14px;overflow:hidden;font-size:15px}
-th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--hair);white-space:nowrap}
-th{font-size:12.5px;font-weight:500;color:var(--muted);letter-spacing:.02em;background:#fcfaf7}
-tr:last-child td{border-bottom:0}
-td.model{font-weight:500;white-space:normal}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:var(--ui);background:var(--bg);color:var(--ink);line-height:1.5}
+.wrap{max-width:1160px;margin:0 auto;padding:0 32px}
+.nav{border-bottom:1px solid var(--hair)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:600;font-size:19px;letter-spacing:-.03em;text-decoration:none;color:var(--ink)}
+.mark{position:relative;width:22px;height:22px}
+.mark i{position:absolute;width:13px;height:13px;border-radius:4px}
+.mark i:nth-child(1){left:0;top:0;background:var(--c2)}
+.mark i:nth-child(2){left:6px;top:4px;background:var(--c1)}
+.mark i:nth-child(3){left:9px;top:9px;background:var(--ink)}
+.pill{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 20px;border-radius:10px;border:1px solid var(--ink);background:var(--ink);font-size:14px;font-weight:500;text-decoration:none;color:#fff}
+.pill:hover{background:#000}
+.hero{padding:64px 0 8px}
+h1{font-family:var(--display);font-weight:500;font-size:clamp(40px,5.6vw,72px);line-height:1;letter-spacing:-.05em;max-width:860px}
+.lede{margin-top:22px;max-width:620px;color:var(--body);font-size:18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}
+.chip{font-size:13px;padding:5px 12px;border:1px solid var(--hair);border-radius:999px;background:var(--soft);color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:44px}
+.stat{border-radius:20px;padding:30px;background:var(--c4);color:var(--ink);min-height:210px;display:flex;flex-direction:column;justify-content:space-between}
+.stat.rust{background:var(--c1)}
+.stat.dark{background:var(--night);color:#fff}
+.stat .big{font-family:var(--display);font-size:72px;line-height:1;font-weight:500;letter-spacing:-.05em}
+.stat.dark .big{color:var(--lime)}
+.stat .cap{margin-top:18px;font-size:15px;line-height:1.45;color:rgba(13,13,13,.78);max-width:300px}
+.stat.dark .cap{color:rgba(255,255,255,.8)}
+h2{font-family:var(--display);font-size:32px;font-weight:500;letter-spacing:-.04em;margin:72px 0 6px}
+.sub{color:var(--muted);font-size:15px;margin-bottom:6px;max-width:680px}
+table{width:100%;border-collapse:collapse;font-size:15px;margin-top:14px}
+th,td{text-align:left;padding:14px 20px 14px 0;border-bottom:1px solid var(--hair);white-space:nowrap}
+th{font-size:13px;font-weight:500;color:var(--muted);border-bottom:1px solid var(--ink);padding-top:8px;padding-bottom:8px}
+td.model{font-family:var(--display);font-size:17px;font-weight:500;letter-spacing:-.02em;white-space:normal}
 td.num{font-variant-numeric:tabular-nums}
-.bar{display:inline-block;height:8px;border-radius:4px;background:var(--accent);vertical-align:middle;margin-right:10px}
-.bar.alt{background:var(--walnut)}
-.delta{color:#2f6b3b;font-weight:500}
-.fail{background:var(--card);border:1px solid var(--hair);border-radius:14px;padding:6px 22px}
-.fail li{padding:12px 0;border-bottom:1px solid var(--hair);list-style:none;font-size:15px}
-.fail li:last-child{border-bottom:0}
+.bar{display:inline-block;height:8px;border-radius:4px;background:var(--ink);vertical-align:middle;margin-right:10px}
+.delta{font-weight:500}
+.fail{margin-top:14px;border-top:1px solid var(--ink)}
+.fail li{padding:16px 0;border-bottom:1px solid var(--hair);list-style:none;font-size:15px}
 .fail b{font-weight:500}
 .fail span{color:var(--muted)}
-.note{margin-top:48px;padding-top:20px;border-top:1px solid var(--hair);color:var(--muted);font-size:13.5px;max-width:760px}
-@media(max-width:760px){.stats{grid-template-columns:1fr}.wrap{padding:36px 18px}table{display:block;overflow-x:auto}}
+.banner{margin-top:80px;background:var(--banner);padding:36px 0}
+.banner .wrap{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.banner p{font-family:var(--display);font-size:24px;font-weight:500;letter-spacing:-.03em;max-width:640px}
+.note{margin:48px 0 64px;padding-top:20px;border-top:1px solid var(--hair);color:var(--muted);font-size:13.5px;max-width:760px}
+@media(max-width:860px){.stats{grid-template-columns:1fr}.wrap{padding:0 18px}table{display:block;overflow-x:auto}.stat{min-height:0}.stat .big{font-size:56px}}
 """
 
 
@@ -189,13 +203,15 @@ def build(results: Path) -> str:
 
     judge = esc(short(meta["judge"]))
     return f"""<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Scout evaluation</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<style>{CSS}</style></head><body><div class="wrap">
-<p class="eyebrow">Scout evaluation</p>
+<title>Scout evaluation</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>{CSS}</style></head><body>
+<nav class="nav"><div class="wrap"><a class="logo" href="/"><span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>Scout</a><a class="pill" href="/">Ask Scout</a></div></nav>
+<div class="wrap"><div class="hero">
 <h1>Which model answers FastAPI questions best?</h1>
 <p class="lede">An agent that searches the FastAPI docs and cites its sources, measured on {n_q} hand-labeled questions: answer quality, citation accuracy, latency and cost.</p>
 <div class="meta"><span class="chip">{n_q} questions, 3 not covered by the docs</span><span class="chip">{n_pages} doc pages, commit {CORPUS_COMMIT}</span>
-<span class="chip">Graded by {judge}</span><span class="chip">{esc(nice_date(meta['timestamp']))}</span></div>
+<span class="chip">Graded by {judge}</span><span class="chip">{esc(nice_date(meta['timestamp']))}</span></div></div>
 <div class="stats">
 <div class="stat rust"><div class="big">{pct(best['accuracy_answerable'])}</div><p class="cap">answer score for {esc(short(best_name))}, the best model tested</p></div>
 <div class="stat"><div class="big">{ratio:.0f}x</div><p class="cap">price gap per question between {esc(short(best_name))} and {esc(short(cheapest))}, which scored {pct(cheap['accuracy_answerable'])}</p></div>
@@ -210,7 +226,8 @@ def build(results: Path) -> str:
 {retr_table}
 {fail_html}
 <p class="note">Questions and reference answers were written from the documentation and have not been independently reviewed. The judge is an LLM, so individual verdicts can be wrong; the reasons are saved in the JSON output. Costs use Anthropic's published prices on 2026-10-20 and local models cost nothing to run.</p>
-</div></body></html>"""
+</div>
+<div class="banner"><div class="wrap"><p>Try it yourself. Ask Scout a question about FastAPI and check every source it cites.</p><a class="pill" href="/">Ask Scout</a></div></div></body></html>"""
 
 
 def main():
