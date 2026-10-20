@@ -119,7 +119,7 @@
     .src { display: block; border-radius: 14px; padding: 14px 16px 15px; text-decoration: none; color: var(--ink); transition: transform .15s, box-shadow .15s; }
     .src .row { display: flex; align-items: center; gap: 10px; }
     .src .no { width: 22px; height: 22px; border-radius: 7px; background: rgba(255,255,255,.7); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex: none; }
-    .src .p { font-family: var(--mono); font-size: 12.5px; word-break: break-all; line-height: 1.4; }
+    .src .p { font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere; line-height: 1.4; }
     .src .t { margin-top: 6px; font-size: 12.5px; opacity: .7; padding-left: 32px; }
     .src:hover { transform: translateX(-3px); }
     .src.on { box-shadow: 0 0 0 2px var(--ink); }
@@ -276,8 +276,8 @@
       `<p class="stopped">${r.stopped === 'error' ? 'The model call failed.' : r.stopped === 'step_limit' ? 'Scout ran out of steps before finishing.' : 'Scout hit its token budget before finishing.'}${r.stopped === 'error' ? '' : ' The text below is the last thing it wrote.'}</p>`;
     const body = r.error ? `<p class="failure">${esc(r.error)}</p>` : renderMarkdown(r.answer || '(no answer)', fnIndex);
 
-    const src = order.map((p, i) => `<a class="src" id="src-${i + 1}" href="${docUrl(p)}" target="_blank" rel="noopener" style="background:${COLORS[i % COLORS.length]}"><div class="row"><span class="no">${i + 1}</span><span class="p">${esc(p)}</span></div><div class="t">Cited in the answer</div></a>`).join('');
-    const extra = reads.map((p) => `<a class="src dim" href="${docUrl(p)}" target="_blank" rel="noopener"><div class="row"><span class="no">-</span><span class="p">${esc(p)}</span></div><div class="t">Read, not cited</div></a>`).join('');
+    const src = order.map((p, i) => `<a class="src" id="src-${i + 1}" href="${docUrl(p)}" target="_blank" rel="noopener" style="background:${COLORS[i % COLORS.length]}"><div class="row"><span class="no">${i + 1}</span><span class="p">${esc(p).replace(/([\/-])/g, '$1<wbr>')}</span></div><div class="t">Cited in the answer</div></a>`).join('');
+    const extra = reads.map((p) => `<a class="src dim" href="${docUrl(p)}" target="_blank" rel="noopener"><div class="row"><span class="no">-</span><span class="p">${esc(p).replace(/([\/-])/g, '$1<wbr>')}</span></div><div class="t">Read, not cited</div></a>`).join('');
     const rail = `<aside><h3>Sources</h3>${order.length || reads.length ? `<div class="list">${src}${extra}</div>` :
       '<p class="none">The answer cites no pages. If it makes claims about FastAPI, check them against the docs.</p>'}
       <p class="sub">Each link opens the official FastAPI documentation.</p></aside>`;
