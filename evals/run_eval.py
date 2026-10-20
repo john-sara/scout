@@ -30,7 +30,7 @@ from scout.pricing import cost_usd  # noqa: E402
 
 JUDGE_SYSTEM = """You grade answers to questions about the FastAPI documentation.
 
-You are given a question, a short reference answer, the relevant documentation pages, and a candidate answer.
+You are given a question, a short reference answer, the relevant documentation pages (including pages the candidate cited), and a candidate answer.
 Grade the candidate against the reference:
 - correct: the candidate gives the same essential solution as the reference. Extra details are fine when the
   documentation pages support them, even if the reference does not mention them.
@@ -70,17 +70,23 @@ def parse_verdict(text: str) -> tuple[str, str]:
     return "ungraded", f"judge reply could not be parsed: {text[:120]!r}"
 
 
-def source_text(question: dict, docs: dict[str, str] | None, per_page: int = 3000, max_pages: int = 2) -> str:
+def source_text(question: dict, docs: dict[str, str] | None, cited: list[str] | None = None,
+                per_page: int = 3000, max_pages: int = 5) -> str:
+    """Expected pages first, then pages the candidate cited, so the judge can check claims against them."""
     if not docs:
         return ""
-    parts = [f"[{p}]\n{docs[p][:per_page]}" for p in question["expected_pages"][:max_pages] if p in docs]
-    return "\n\n".join(parts)
+    pages = []
+    for p in list(question["expected_pages"][:2]) + list(cited or []):
+        if p in docs and p not in pages:
+            pages.append(p)
+    return "\n\n".join(f"[{p}]\n{docs[p][:per_page]}" for p in pages[:max_pages])
 
 
-def judge_answer(judge: Provider, judge_model: str, question: dict, answer: str, docs: dict[str, str] | None = None) -> dict:
+def judge_answer(judge: Provider, judge_model: str, question: dict, answer: str, docs: dict[str, str] | None = None,
+                 cited: list[str] | None = None) -> dict:
     if not answer.strip():
         return {"verdict": "incorrect", "reason": "empty answer", "input_tokens": 0, "output_tokens": 0}
-    sources = source_text(question, docs)
+    sources = source_text(question, docs, cited)
     prompt = (f"Question: {question['question']}\n\nReference answer: {question['reference']}\n\n"
               + (f"Documentation pages:\n{sources}\n\n" if sources else "")
               + f"Candidate answer:\n{answer}")
@@ -204,7 +210,7 @@ def main():
             for q in questions:
                 result = run_agent(q["question"], provider, model, tools, args.max_steps, args.token_budget).to_dict()
                 try:
-                    j = judge_answer(judge, judge_model, q, result["answer"], tools.docs) if result["stopped"] != "error" else \
+                    j = judge_answer(judge, judge_model, q, result["answer"], tools.docs, result["cited_pages"]) if result["stopped"] != "error" else \
                         {"verdict": "ungraded", "reason": result["error"], "input_tokens": 0, "output_tokens": 0}
                     judge_failures = 0
                 except ProviderError as e:

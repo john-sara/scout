@@ -169,8 +169,10 @@ def build(results: Path) -> str:
                 f"<td class='num'>{s_before['limit_hits']} to {s_after['limit_hits']}</td></tr>")
         before_html = ("<h2>What the error analysis fixed</h2><p class='sub'>The first run exposed three problems: long "
                        "pages cut off at 6,000 characters, runs that spent every step searching without answering, and a "
-                       "judge that could not see the docs. The second column re-grades the first run with the fixed judge "
-                       "so the comparison is fair.</p>"
+                       "judge that could not see the docs. The first run was re-graded once the judge could see the docs, so "
+                       "this compares answers and not judge versions. After the second run, the judge was also shown "
+                       "the pages each answer cited, which removed false penalties for correct claims on other real "
+                       "pages. Part of the last gain comes from that grading fix, not from the agent.</p>"
                        "<table><tr><th>Model</th><th>Before fixes</th><th>After fixes</th><th>Change</th>"
                        "<th>Runs that hit a limit</th></tr>" + "".join(brows) + "</table>")
 

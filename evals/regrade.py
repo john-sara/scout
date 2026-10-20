@@ -27,6 +27,8 @@ def main():
     ap.add_argument("--questions", default=str(ROOT / "evals" / "questions.jsonl"))
     ap.add_argument("--max-cost", type=float, default=1.5)
     ap.add_argument("--out", default=str(ROOT / "results"))
+    ap.add_argument("--write-run", action="store_true",
+                    help="also save a full run file with the new grades, so the app and report use it")
     args = ap.parse_args()
 
     run = json.loads(Path(args.run_json).read_text(encoding="utf-8"))
@@ -40,7 +42,7 @@ def main():
         old = rec["row"]
         q = questions[old["id"]]
         try:
-            j = judge_answer(judge, judge_model, q, rec["answer"], docs)
+            j = judge_answer(judge, judge_model, q, rec["answer"], docs, rec["cited"])
         except ProviderError as e:
             j = {"verdict": "ungraded", "reason": f"judge failed: {e}", "input_tokens": 0, "output_tokens": 0}
             judge_failures += 1
@@ -70,6 +72,18 @@ def main():
     (out / f"regraded-{meta['timestamp']}.json").write_text(json.dumps({"meta": meta, "summaries": summaries,
                                                                          "rows": rows_by_config}, indent=2))
     md = render_markdown(summaries, failures, meta)
+    if args.write_run:
+        new_rows = {n: {r["id"]: r for r in rows} for n, rows in rows_by_config.items()}
+        records = []
+        for rec in run["records"]:
+            row = new_rows.get(rec["config"], {}).get(rec["row"]["id"])
+            if row is not None:
+                records.append({**rec, "row": {k: v for k, v in row.items() if k != "previous_verdict"}})
+        run_meta = {**run["meta"], "timestamp": meta["timestamp"], "judge": args.judge,
+                    "regraded_from": args.run_json, "judge_cost_usd": spent}
+        (out / f"run-{meta['timestamp']}.json").write_text(
+            json.dumps({"meta": run_meta, "summaries": summaries, "records": records}, indent=2))
+        (out / "latest.md").write_text(md, encoding="utf-8")
     (out / "regraded.md").write_text(md, encoding="utf-8")
     print("\n" + md + f"\n\nJudge spend: ${spent:.2f}")
 

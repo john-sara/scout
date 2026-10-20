@@ -49,7 +49,19 @@ Each question is run through the agent and graded by a judge model against the r
 
 `python evals/report.py` builds `results/report.html` from the saved runs: a one-page summary of the model comparison, the retrieval comparison and the remaining failures.
 
-Results from the latest run go here.
+#### Results
+
+33 questions, graded by Claude Opus 5.5, same tools and retrieval for every model:
+
+| Model | Answer score | Admits gaps | Cites right page | Median latency | Cost / question |
+|---|---|---|---|---|---|
+| Claude Haiku 5.5 | 98% | 100% | 100% | 7.3s | $0.0017 |
+| Claude Sonnet 5.5 | 100% | 100% | 100% | 9.2s | $0.0255 |
+| llama3.1 8B (local) | 18% | 0% | 3% | 19.2s | free |
+
+Haiku is within two points of Sonnet at about a fifteenth of the price. The local 8B model mostly fails by inventing tool results instead of calling the tools, which is the clearest case for hosted models in an agent loop.
+
+What error analysis fixed: pages were cut off at 6,000 characters, some runs used every step searching without answering, and the judge could not see the docs. A later grading fix (showing the judge the pages an answer cited) removed false penalties, so part of the final gain is grading, not the agent. Scores this close to 100% on 33 questions mean the set is nearly saturated; a harder set is the next step.
 
 ## Limits
 
