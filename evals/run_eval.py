@@ -187,6 +187,8 @@ def main():
     ap.add_argument("--max-steps", type=int, default=6)
     ap.add_argument("--token-budget", type=int, default=40_000)
     ap.add_argument("--max-cost", type=float, default=5.0, help="abort if total spend passes this many dollars")
+    ap.add_argument("--retrieval", choices=["bm25", "embed", "hybrid"], default="bm25",
+                    help="how search_docs finds pages; embed and hybrid need Ollama with an embedding model")
     ap.add_argument("--out", default=str(ROOT / "results"))
     args = ap.parse_args()
 
@@ -201,10 +203,10 @@ def main():
     all_rows: dict[str, list[dict]] = {}
     records: list[dict] = []
     for chunking in args.chunking:
-        tools = build_tools(chunking, enable_code=args.enable_code)
+        tools = build_tools(chunking, enable_code=args.enable_code, retrieval=args.retrieval)
         for spec in args.models:
             provider, model = make_provider(spec)
-            name = f"{spec} / {chunking}"
+            name = f"{spec} / {chunking}" + ("" if args.retrieval == "bm25" else f"+{args.retrieval}")
             print(f"\n== {name}")
             rows = []
             for q in questions:
@@ -241,7 +243,7 @@ def main():
     summaries = {n: summarize(r) for n, r in all_rows.items()}
     failures = {n: [x for x in r if x["verdict"] in ("partial", "incorrect", "ungraded")] for n, r in all_rows.items()}
     meta = {"timestamp": stamp, "n_questions": len(questions), "judge": args.judge,
-            "max_steps": args.max_steps, "code_tool": args.enable_code, "token_budget": args.token_budget, "total_cost_usd": spent}
+            "max_steps": args.max_steps, "code_tool": args.enable_code, "retrieval": args.retrieval, "token_budget": args.token_budget, "total_cost_usd": spent}
     (out_dir / f"run-{stamp}.json").write_text(json.dumps({"meta": meta, "summaries": summaries, "records": records}, indent=2))
     md = render_markdown(summaries, failures, meta)
     (out_dir / "latest.md").write_text(md, encoding="utf-8")

@@ -15,6 +15,7 @@ from scout.llm import FakeProvider, LLMResponse, ToolCall
 class AppTests(unittest.TestCase):
     def setUp(self):
         scout_app._hits.clear()
+        scout_app._spend.update(day="", usd=0.0)
         self.client = TestClient(scout_app.app)
         self.models = mock.patch.object(scout_app, "available_models", return_value=["fake:m"])
         self.models.start()
@@ -55,6 +56,45 @@ class AppTests(unittest.TestCase):
             codes = [self.client.post("/api/ask", json={"question": "How do I enable CORS?", "model": "fake:m"}).status_code
                      for _ in range(3)]
         self.assertEqual(codes, [200, 200, 429])
+
+    def test_daily_budget_stops_answers(self):
+        env = {"SCOUT_DAILY_BUDGET_USD": "0.0001"}
+        with mock.patch.dict("os.environ", env), \
+                mock.patch.object(scout_app, "make_provider", side_effect=lambda spec: (self.fake_provider(), "m")):
+            body = {"question": "How do I enable CORS?", "model": "fake:m"}
+            first = self.client.post("/api/ask", json=body)
+            scout_app._spend["usd"] = 1.0  # as if real spending had happened
+            second = self.client.post("/api/ask", json=body)
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 429)
+        self.assertIn("budget", second.json()["detail"])
+
+    def test_no_budget_means_no_cap(self):
+        with mock.patch.dict("os.environ", {}, clear=False):
+            import os
+            os.environ.pop("SCOUT_DAILY_BUDGET_USD", None)
+            self.assertIsNone(scout_app.daily_budget())
+
+    def test_rate_limit_uses_forwarded_address_behind_a_proxy(self):
+        with mock.patch.dict("os.environ", {"SCOUT_TRUST_PROXY": "1"}), \
+                mock.patch.object(scout_app, "RATE_LIMIT", 1), \
+                mock.patch.object(scout_app, "make_provider", side_effect=lambda spec: (self.fake_provider(), "m")):
+            body = {"question": "How do I enable CORS?", "model": "fake:m"}
+            a1 = self.client.post("/api/ask", json=body, headers={"x-forwarded-for": "9.9.9.9, 1.1.1.1"})
+            a2 = self.client.post("/api/ask", json=body, headers={"x-forwarded-for": "9.9.9.9, 1.1.1.1"})
+            b1 = self.client.post("/api/ask", json=body, headers={"x-forwarded-for": "9.9.9.9, 2.2.2.2"})
+        self.assertEqual([a1.status_code, a2.status_code, b1.status_code], [200, 429, 200])
+
+    def test_forwarded_header_ignored_without_proxy_setting(self):
+        with mock.patch.object(scout_app, "RATE_LIMIT", 1), \
+                mock.patch.object(scout_app, "make_provider", side_effect=lambda spec: (self.fake_provider(), "m")):
+            body = {"question": "How do I enable CORS?", "model": "fake:m"}
+            codes = [self.client.post("/api/ask", json=body, headers={"x-forwarded-for": f"3.3.3.{i}"}).status_code
+                     for i in range(2)]
+        self.assertEqual(codes, [200, 429])
+
+    def test_healthz(self):
+        self.assertEqual(self.client.get("/healthz").json(), {"ok": True})
 
     def test_eval_summary_reads_saved_runs(self):
         import json

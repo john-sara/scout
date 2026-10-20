@@ -200,6 +200,7 @@
           <label>Model <select id="model" aria-label="Model"></select></label>
           <label>Chunking <select id="chunking" aria-label="Chunking strategy"><option value="headings">By heading</option><option value="fixed">Fixed windows</option></select></label>
           <span>Ctrl+Enter to ask</span>
+          <span id="demo" hidden>Public demo with a small daily budget. Answers may be slow after a quiet spell.</span>
         </div>
       </form>
     </div>
@@ -395,6 +396,7 @@
     try {
       const cfg = await (await fetch('/api/config')).json();
       $('model').innerHTML = cfg.models.map((m) => `<option value="${esc(m)}">${esc(shortName(m))}${m.startsWith('ollama') ? ' (local)' : ''}</option>`).join('');
+      if (cfg.demo) $('demo').hidden = false;
       const saved = store.get('scout.model'); if (saved && cfg.models.includes(saved)) $('model').value = saved;
       $('model').addEventListener('change', () => store.set('scout.model', $('model').value));
       if (!cfg.models.length) { $('go').disabled = true; $('out').insertAdjacentHTML('afterbegin', '<p class="failure" style="padding-top:24px">No models are available. Set ANTHROPIC_API_KEY or start Ollama, then restart Scout.</p>'); }

@@ -1,0 +1,14 @@
+.git
+.venv
+__pycache__
+*.pyc
+data
+results/v2
+results/ollama
+results/smoke
+results/*.json
+results/*.txt
+results/*.md
+*.bat
+*.ps1
+.env

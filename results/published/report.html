@@ -1,0 +1,75 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scout evaluation</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--ink:#0d0d0d;--body:#2b2b2b;--muted:#6b6b6b;--hair:#e8e8e8;--soft:#f5f5f4;--lime:#d4f45a;--night:#111;--banner:#c9d3ea;
+--c1:#ff9d70;--c2:#b8aeff;--c3:#d4f45a;--c4:#9fd8ff;--c5:#ffb5d0;--c6:#ffe37a;
+--display:'Inter Tight','Inter',-apple-system,sans-serif;--ui:'Inter',-apple-system,'Segoe UI',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:var(--ui);background:var(--bg);color:var(--ink);line-height:1.5}
+.wrap{max-width:1160px;margin:0 auto;padding:0 32px}
+.nav{border-bottom:1px solid var(--hair)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:600;font-size:19px;letter-spacing:-.03em;text-decoration:none;color:var(--ink)}
+.mark{position:relative;width:22px;height:22px}
+.mark i{position:absolute;width:13px;height:13px;border-radius:4px}
+.mark i:nth-child(1){left:0;top:0;background:var(--c2)}
+.mark i:nth-child(2){left:6px;top:4px;background:var(--c1)}
+.mark i:nth-child(3){left:9px;top:9px;background:var(--ink)}
+.pill{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 20px;border-radius:10px;border:1px solid var(--ink);background:var(--ink);font-size:14px;font-weight:500;text-decoration:none;color:#fff}
+.pill:hover{background:#000}
+.hero{padding:64px 0 8px}
+h1{font-family:var(--display);font-weight:500;font-size:clamp(40px,5.6vw,72px);line-height:1;letter-spacing:-.05em;max-width:860px}
+.lede{margin-top:22px;max-width:620px;color:var(--body);font-size:18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}
+.chip{font-size:13px;padding:5px 12px;border:1px solid var(--hair);border-radius:999px;background:var(--soft);color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:44px}
+.stat{border-radius:20px;padding:30px;background:var(--c4);color:var(--ink);min-height:210px;display:flex;flex-direction:column;justify-content:space-between}
+.stat.rust{background:var(--c1)}
+.stat.dark{background:var(--night);color:#fff}
+.stat .big{font-family:var(--display);font-size:72px;line-height:1;font-weight:500;letter-spacing:-.05em}
+.stat.dark .big{color:var(--lime)}
+.stat .cap{margin-top:18px;font-size:15px;line-height:1.45;color:rgba(13,13,13,.78);max-width:300px}
+.stat.dark .cap{color:rgba(255,255,255,.8)}
+h2{font-family:var(--display);font-size:32px;font-weight:500;letter-spacing:-.04em;margin:72px 0 6px}
+.sub{color:var(--muted);font-size:15px;margin-bottom:6px;max-width:680px}
+table{width:100%;border-collapse:collapse;font-size:15px;margin-top:14px}
+th,td{text-align:left;padding:14px 20px 14px 0;border-bottom:1px solid var(--hair);white-space:nowrap}
+th{font-size:13px;font-weight:500;color:var(--muted);border-bottom:1px solid var(--ink);padding-top:8px;padding-bottom:8px}
+td.model{font-family:var(--display);font-size:17px;font-weight:500;letter-spacing:-.02em;white-space:normal}
+td.num{font-variant-numeric:tabular-nums}
+.bar{display:inline-block;height:8px;border-radius:4px;background:var(--ink);vertical-align:middle;margin-right:10px}
+.delta{font-weight:500}
+.fail{margin-top:14px;border-top:1px solid var(--ink)}
+.fail li{padding:16px 0;border-bottom:1px solid var(--hair);list-style:none;font-size:15px}
+.fail b{font-weight:500}
+.fail span{color:var(--muted)}
+.banner{margin-top:80px;background:var(--banner);padding:36px 0}
+.banner .wrap{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.banner p{font-family:var(--display);font-size:24px;font-weight:500;letter-spacing:-.03em;max-width:640px}
+.note{margin:48px 0 64px;padding-top:20px;border-top:1px solid var(--hair);color:var(--muted);font-size:13.5px;max-width:760px}
+@media(max-width:860px){.stats{grid-template-columns:1fr}.wrap{padding:0 18px}table{display:block;overflow-x:auto}.stat{min-height:0}.stat .big{font-size:56px}}
+</style></head><body>
+<nav class="nav"><div class="wrap"><a class="logo" href="/"><span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>Scout</a><a class="pill" href="/">Ask Scout</a></div></nav>
+<div class="wrap"><div class="hero">
+<h1>Which model answers FastAPI questions best?</h1>
+<p class="lede">An agent that searches the FastAPI docs and cites its sources, measured on 33 hand-labeled questions: answer quality, citation accuracy, latency and cost.</p>
+<div class="meta"><span class="chip">33 questions, 3 not covered by the docs</span><span class="chip">148 doc pages, commit 03002a0</span>
+<span class="chip">Graded by Claude Opus 5.5</span><span class="chip">Oct 20, 2026</span></div></div>
+<div class="stats">
+<div class="stat rust"><div class="big">100%</div><p class="cap">answer score for Claude Sonnet 5.5, the best model tested</p></div>
+<div class="stat"><div class="big">15x</div><p class="cap">price gap per question between Claude Sonnet 5.5 and Claude Haiku 5.5, which scored 98%</p></div>
+<div class="stat dark"><div class="big">100%</div><p class="cap">How often models admitted when the docs didn't cover a question, instead of inventing an answer</p></div>
+</div>
+<h2>Models compared</h2>
+<p class="sub">Same questions, same tools, same retrieval. The answer score counts correct as 1 and partially correct as 0.5 on the 30 questions the docs can answer.</p>
+<table><tr><th>Model</th><th>Answer score</th><th>Admits gaps</th><th>Cites right page</th><th>Median latency</th><th>Cost per question</th></tr><tr><td class='model'>Claude Haiku 5.5</td><td class='num'><span class='bar' style='width:118px'></span>98%</td><td class='num'>100%</td><td class='num'>100%</td><td class='num'>7.3s</td><td class='num'>$0.0017</td></tr><tr><td class='model'>Claude Sonnet 5.5</td><td class='num'><span class='bar' style='width:120px'></span>100%</td><td class='num'>100%</td><td class='num'>100%</td><td class='num'>9.2s</td><td class='num'>$0.0255</td></tr><tr><td class='model'>llama3.1</td><td class='num'><span class='bar' style='width:22px'></span>18%</td><td class='num'>0%</td><td class='num'>3%</td><td class='num'>19.2s</td><td class='num'>$0.0000</td></tr></table>
+<h2>What the error analysis fixed</h2><p class='sub'>The first run exposed three problems: long pages cut off at 6,000 characters, runs that spent every step searching without answering, and a judge that could not see the docs. The first run was re-graded once the judge could see the docs, so this compares answers and not judge versions. After the second run, the judge was also shown the pages each answer cited, which removed false penalties for correct claims on other real pages. Part of the last gain comes from that grading fix, not from the agent.</p><table><tr><th>Model</th><th>Before fixes</th><th>After fixes</th><th>Change</th><th>Runs that hit a limit</th></tr><tr><td class='model'>Claude Haiku 5.5</td><td class='num'>95%</td><td class='num'>98%</td><td class='num delta'>+3 pts</td><td class='num'>1 to 0</td></tr><tr><td class='model'>Claude Sonnet 5.5</td><td class='num'>93%</td><td class='num'>100%</td><td class='num delta'>+7 pts</td><td class='num'>0 to 0</td></tr></table>
+<h2>Retrieval: how to split the docs</h2>
+<p class="sub">Keyword search (BM25) over two chunking strategies, no model involved. Hit means a correct page appears in the top results for a question.</p>
+<table><tr><th>Chunking</th><th>Chunks</th><th>Right page in top 1</th><th>Top 3</th><th>Top 5</th><th>MRR</th></tr><tr><td class='model'>Fixed 200-word windows</td><td class='num'>695</td><td class='num'>57%</td><td class='num'>77%</td><td class='num'>87%</td><td class='num'>0.69</td></tr><tr><td class='model'>Split on headings</td><td class='num'>1,142</td><td class='num'>63%</td><td class='num'>80%</td><td class='num'>93%</td><td class='num'>0.75</td></tr></table>
+<h2>Where it still fails</h2><p class='sub'>Every answer the judge did not mark fully correct, with its reason.</p><ul class='fail'><li><b>Claude Haiku 5.5, q15</b> <span>(partial)</span><br>How do I issue JWT access tokens for login?<br><span>Covers PyJWT, a signed token with expiry, and the /token endpoint, but omits password hashing, which is part of the reference solution.</span></li></ul>
+<p class="note">Questions and reference answers were written from the documentation and have not been independently reviewed. The judge is an LLM, so individual verdicts can be wrong; the reasons are saved in the JSON output. Costs use Anthropic's published prices on 2026-10-20 and local models cost nothing to run.</p>
+</div>
+<div class="banner"><div class="wrap"><p>Try it yourself. Ask Scout a question about FastAPI and check every source it cites.</p><a class="pill" href="/">Ask Scout</a></div></div></body></html>

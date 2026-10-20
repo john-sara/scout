@@ -3,6 +3,7 @@ __pycache__/
 .venv/
 venv/
 data/fastapi_docs/
+data/embeddings/
 .env
 results/*.json
 .DS_Store

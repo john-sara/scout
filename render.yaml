@@ -1,0 +1,19 @@
+# Render blueprint: connects this repo to a free web service built from the Dockerfile.
+# You add ANTHROPIC_API_KEY in the Render dashboard; it is never stored in the repo.
+services:
+  - type: web
+    name: scout
+    runtime: docker
+    plan: free
+    healthCheckPath: /healthz
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: SCOUT_CLAUDE_MODELS
+        value: claude-haiku-5-5
+      - key: SCOUT_DISABLE_OLLAMA
+        value: "1"
+      - key: SCOUT_TRUST_PROXY
+        value: "1"
+      - key: SCOUT_DAILY_BUDGET_USD
+        value: "2"

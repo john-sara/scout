@@ -74,10 +74,14 @@ class BM25Index:
 
     def search_pages(self, query: str, k: int = 5, depth: int = 50) -> list[str]:
         """Rank whole pages: a page's rank is that of its best chunk."""
-        seen: list[str] = []
-        for hit in self.search(query, k=depth):
-            if hit.chunk.path not in seen:
-                seen.append(hit.chunk.path)
-            if len(seen) == k:
-                break
-        return seen
+        return pages_from_hits(self.search(query, k=depth), k)
+
+
+def pages_from_hits(hits: list[Hit], k: int) -> list[str]:
+    seen: list[str] = []
+    for hit in hits:
+        if hit.chunk.path not in seen:
+            seen.append(hit.chunk.path)
+        if len(seen) == k:
+            break
+    return seen
