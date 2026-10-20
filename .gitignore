@@ -13,3 +13,7 @@ results/*.md
 !results/retrieval.md
 results/v2/
 results/ollama/
+
+# local helper scripts for Windows
+/*.bat
+/*.ps1
