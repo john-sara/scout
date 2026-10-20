@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#faf8f5; --card:#fff; --ink:#1f1b18; --body:#3d3631; --muted:#6b625a; --hair:#e7e1d9; --walnut:#3b2b22; --rust:#9c3d17; --accent:#c2561b; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Inter, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--ink); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    :focus-visible { outline: 2px solid #1b61c9; outline-offset: 2px; }
+    main { max-width: 760px; margin: 0 auto; padding: 56px 20px 80px; }
+    h1 { font-size: 40px; font-weight: 500; letter-spacing: -0.04em; }
+    .sub { color: var(--muted); margin-top: 6px; }
+    form { margin-top: 32px; }
+    textarea { width: 100%; min-height: 96px; resize: vertical; padding: 14px 16px; font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--hair); border-radius: 12px; }
+    textarea:focus { border-color: #cfc6ba; }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; align-items: center; }
+    select { font: inherit; font-size: 14px; padding: 9px 12px; border: 1px solid var(--hair); border-radius: 10px; background: var(--card); color: var(--ink); }
+    button { font: inherit; font-weight: 500; font-size: 15px; height: 42px; padding: 0 22px; border-radius: 12px; border: 0; background: var(--ink); color: #fff; cursor: pointer; margin-left: auto; }
+    button:hover { background: #120f0d; }
+    button:disabled { opacity: .5; cursor: default; }
+    .hint { font-size: 13px; color: var(--muted); margin-top: 10px; }
+    .samples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .samples button { all: unset; cursor: pointer; font-size: 13px; padding: 5px 12px; border: 1px solid var(--hair); border-radius: 999px; background: var(--card); color: var(--body); }
+    .samples button:hover { border-color: #cfc6ba; }
+    #out { margin-top: 36px; }
+    .answer { background: var(--card); border: 1px solid var(--hair); border-radius: 14px; padding: 22px 24px; }
+    .answer p { margin: 0 0 12px; }
+    .answer p:last-child { margin-bottom: 0; }
+    pre { background: var(--walnut); color: #f5efe8; padding: 14px 16px; border-radius: 10px; overflow-x: auto; font-size: 13px; line-height: 1.5; margin: 0 0 12px; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+    p code { background: #f1ece6; padding: 1px 5px; border-radius: 5px; }
+    .cite { color: var(--rust); text-decoration: none; border-bottom: 1px solid #e5c2ae; font-size: 0.9em; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .chip { font-size: 12.5px; padding: 3px 10px; border: 1px solid var(--hair); border-radius: 999px; background: var(--card); color: var(--muted); }
+    .chip.warn { color: var(--rust); border-color: #e5c2ae; background: #fdf3ec; }
+    details { margin-top: 14px; font-size: 14px; color: var(--body); }
+    summary { cursor: pointer; color: var(--muted); }
+    ol { margin: 10px 0 0 20px; }
+    li { margin-bottom: 4px; }
+    .err { color: var(--rust); }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Scout</h1>
+  <p class="sub">Ask the FastAPI docs. Answers cite the pages they come from.</p>
+
+  <form id="form">
+    <label for="q" class="sr" style="position:absolute;left:-9999px">Question</label>
+    <textarea id="q" placeholder="How do I run code when my app starts up?" maxlength="500" required></textarea>
+    <div class="controls">
+      <label>Model <select id="model" aria-label="Model"></select></label>
+      <label>Chunking <select id="chunking" aria-label="Chunking strategy"><option>headings</option><option>fixed</option></select></label>
+      <button id="go" type="submit">Ask</button>
+    </div>
+    <p class="hint" id="hint"></p>
+    <div class="samples" id="samples"></div>
+  </form>
+
+  <section id="out" aria-live="polite"></section>
+</main>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const SAMPLES = ["How do I run code when my app starts and stops?", "How do I enable CORS?", "How do I split a big app across files?", "How do I set a rate limit?"];
+
+  const esc = (s) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const docUrl = (p) => 'https://fastapi.tiangolo.com/' + p.replace(/(^|\/)index\.md$/, '$1').replace(/\.md$/, '/');
+
+  // Escape first, then add formatting, so model output can never inject HTML.
+  function render(text) {
+    const blocks = [];
+    let t = esc(text).replace(/```[\w+-]*\n([\s\S]*?)```/g, (_, code) => { blocks.push(code); return `\u0000${blocks.length - 1}\u0000`; });
+    t = t.split(/\n{2,}/).map((para) => {
+      if (/^\u0000\d+\u0000$/.test(para.trim())) return para.trim();
+      let h = para.replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\[([\w\-./]+\.md)\]/g, (_, p) => `<a class="cite" href="${docUrl(p)}" target="_blank" rel="noopener">${p}</a>`)
+        .replace(/\n/g, '<br>');
+      return `<p>${h}</p>`;
+    }).join('');
+    return t.replace(/\u0000(\d+)\u0000/g, (_, i) => `<pre><code>${blocks[i]}</code></pre>`);
+  }
+
+  function renderResult(r) {
+    const steps = r.steps.map((s) => {
+      if (s.kind === 'tool') return `<li><code>${esc(s.tool)}</code>(${esc(JSON.stringify(s.input))})${s.ok ? '' : ' <span class="err">failed</span>'}</li>`;
+      if (s.kind === 'answer') return '<li>wrote the answer</li>';
+      return `<li class="err">${esc(s.detail || s.kind)}</li>`;
+    }).join('');
+    const warn = r.stopped !== 'answered' ? `<span class="chip warn">stopped: ${esc(r.stopped)}</span>` : '';
+    const body = r.error ? `<p class="err">${esc(r.error)}</p>` : render(r.answer || '(no answer)');
+    return `<div class="answer">${body}
+      <div class="meta">${warn}
+        <span class="chip">${r.latency_s.toFixed(1)}s</span>
+        <span class="chip">${(r.input_tokens + r.output_tokens).toLocaleString()} tokens</span>
+        <span class="chip">$${r.cost_usd.toFixed(4)}</span>
+        <span class="chip">${r.cited_pages.length} cited</span>
+      </div>
+      <details><summary>How it answered (${r.steps.length} steps)</summary><ol>${steps}</ol></details></div>`;
+  }
+
+  async function init() {
+    SAMPLES.forEach((s) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = s; b.onclick = () => { $('q').value = s; $('q').focus(); }; $('samples').appendChild(b); });
+    try {
+      const cfg = await (await fetch('/api/config')).json();
+      $('model').innerHTML = cfg.models.map((m) => `<option>${esc(m)}</option>`).join('');
+      if (!cfg.models.length) { $('hint').textContent = 'No models available. Set ANTHROPIC_API_KEY or start Ollama, then restart.'; $('go').disabled = true; }
+    } catch { $('hint').textContent = 'Could not reach the Scout server.'; $('go').disabled = true; }
+  }
+
+  $('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('go').disabled = true; $('go').textContent = 'Thinking...';
+    $('out').innerHTML = '';
+    try {
+      const res = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: $('q').value, model: $('model').value, chunking: $('chunking').value }) });
+      const data = await res.json();
+      $('out').innerHTML = res.ok ? renderResult(data) : `<p class="err">${esc(typeof data.detail === 'string' ? data.detail : 'Request failed')}</p>`;
+    } catch { $('out').innerHTML = '<p class="err">Request failed.</p>'; }
+    $('go').disabled = false; $('go').textContent = 'Ask';
+  });
+
+  init();
+</script>
+</body>
+</html>
