@@ -1,5 +1,7 @@
 # Scout
 
+**Live demo: https://scout-bc8e.onrender.com** (free host, so the first request after a quiet spell can take a minute).
+
 Scout answers questions about the FastAPI documentation. An agent searches the docs, reads the pages it needs, and numbers every source it uses in the answer. The repo also includes an evaluation that compares models on answer quality, citation accuracy, latency and cost.
 
 ![Scout answering a question about sharing logic across endpoints, with four cited sources](docs/scout-answer.png)
