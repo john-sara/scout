@@ -145,7 +145,8 @@
     .bench.slide tbody tr:nth-child(2) { animation-delay: .3s; }
     .bench.slide tbody tr:nth-child(3) { animation-delay: .38s; }
     @keyframes slideUp { from { opacity: 0; transform: translateY(36px); } to { opacity: 1; transform: none; } }
-    @media (prefers-reduced-motion: reduce) { .bench.slide * { animation: none !important; } }
+    @media (prefers-reduced-motion: reduce) { .bench.slide * { animation-name: fadeIn !important; } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .bench h2 { font-family: var(--display); font-size: 32px; font-weight: 500; letter-spacing: -0.04em; }
     .bench .sub { margin-top: 6px; font-size: 15px; color: var(--muted); max-width: 620px; }
     .bench table { margin-top: 18px; border-collapse: collapse; font-size: 15px; width: 100%; max-width: 820px; }
@@ -350,10 +351,8 @@
 
   function glideTo(el) {
     if (!el || el.hidden) return;
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const start = window.scrollY, end = Math.max(0, el.getBoundingClientRect().top + start - 24), dist = end - start, dur = 900;
+    const start = window.scrollY, end = Math.max(0, el.getBoundingClientRect().top + start - 24), dist = end - start, dur = 1000;
     el.classList.remove('slide');
-    if (reduce) { window.scrollTo(0, end); return; }
     const t0 = performance.now();
     const ease = (t) => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
     let started = false;
