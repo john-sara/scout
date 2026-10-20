@@ -6,126 +6,386 @@
   <title>Scout</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
-    :root { --bg:#faf8f5; --card:#fff; --ink:#1f1b18; --body:#3d3631; --muted:#6b625a; --hair:#e7e1d9; --walnut:#3b2b22; --rust:#9c3d17; --accent:#c2561b; }
+    :root {
+      --bg: #ffffff; --ink: #0d0d0d; --body: #2b2b2b; --muted: #6b6b6b; --hair: #e8e8e8; --soft: #f5f5f4;
+      --lime: #d4f45a; --night: #111111; --banner: #c9d3ea;
+      --c1: #ff9d70; --c2: #b8aeff; --c3: #d4f45a; --c4: #9fd8ff; --c5: #ffb5d0; --c6: #ffe37a;
+      --display: 'Inter Tight', 'Inter', -apple-system, sans-serif;
+      --ui: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+      --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Inter, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--ink); line-height: 1.6; -webkit-font-smoothing: antialiased; }
-    :focus-visible { outline: 2px solid #1b61c9; outline-offset: 2px; }
-    main { max-width: 760px; margin: 0 auto; padding: 56px 20px 80px; }
-    h1 { font-size: 40px; font-weight: 500; letter-spacing: -0.04em; }
-    .sub { color: var(--muted); margin-top: 6px; }
-    form { margin-top: 32px; }
-    textarea { width: 100%; min-height: 96px; resize: vertical; padding: 14px 16px; font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--hair); border-radius: 12px; }
-    textarea:focus { border-color: #cfc6ba; }
-    .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; align-items: center; }
-    select { font: inherit; font-size: 14px; padding: 9px 12px; border: 1px solid var(--hair); border-radius: 10px; background: var(--card); color: var(--ink); }
-    button { font: inherit; font-weight: 500; font-size: 15px; height: 42px; padding: 0 22px; border-radius: 12px; border: 0; background: var(--ink); color: #fff; cursor: pointer; margin-left: auto; }
-    button:hover { background: #120f0d; }
-    button:disabled { opacity: .5; cursor: default; }
-    .hint { font-size: 13px; color: var(--muted); margin-top: 10px; }
-    .samples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-    .samples button { all: unset; cursor: pointer; font-size: 13px; padding: 5px 12px; border: 1px solid var(--hair); border-radius: 999px; background: var(--card); color: var(--body); }
-    .samples button:hover { border-color: #cfc6ba; }
-    #out { margin-top: 36px; }
-    .answer { background: var(--card); border: 1px solid var(--hair); border-radius: 14px; padding: 22px 24px; }
-    .answer p { margin: 0 0 12px; }
-    .answer p:last-child { margin-bottom: 0; }
-    pre { background: var(--walnut); color: #f5efe8; padding: 14px 16px; border-radius: 10px; overflow-x: auto; font-size: 13px; line-height: 1.5; margin: 0 0 12px; }
-    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
-    p code { background: #f1ece6; padding: 1px 5px; border-radius: 5px; }
-    .cite { color: var(--rust); text-decoration: none; border-bottom: 1px solid #e5c2ae; font-size: 0.9em; }
-    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-    .chip { font-size: 12.5px; padding: 3px 10px; border: 1px solid var(--hair); border-radius: 999px; background: var(--card); color: var(--muted); }
-    .chip.warn { color: var(--rust); border-color: #e5c2ae; background: #fdf3ec; }
-    details { margin-top: 14px; font-size: 14px; color: var(--body); }
-    summary { cursor: pointer; color: var(--muted); }
-    ol { margin: 10px 0 0 20px; }
-    li { margin-bottom: 4px; }
-    .err { color: var(--rust); }
+    html { -webkit-font-smoothing: antialiased; }
+    body { font-family: var(--ui); background: var(--bg); color: var(--ink); line-height: 1.5; min-height: 100vh; }
+    :focus-visible { outline: 2px solid #1b61c9; outline-offset: 2px; border-radius: 6px; }
+    button, select, textarea { font: inherit; color: inherit; }
+    .wrap { max-width: 1160px; margin: 0 auto; padding: 0 32px; }
+
+    /* ---------- nav ---------- */
+    .nav { border-bottom: 1px solid var(--hair); }
+    .nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .logo { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 600; font-size: 19px; letter-spacing: -0.03em; text-decoration: none; color: var(--ink); }
+    .mark { position: relative; width: 22px; height: 22px; }
+    .mark i { position: absolute; width: 13px; height: 13px; border-radius: 4px; }
+    .mark i:nth-child(1) { left: 0; top: 0; background: var(--c2); }
+    .mark i:nth-child(2) { left: 6px; top: 4px; background: var(--c1); }
+    .mark i:nth-child(3) { left: 9px; top: 9px; background: var(--ink); }
+    .nav-r { display: flex; align-items: center; gap: 22px; font-size: 14px; }
+    .nav-r a { color: var(--body); text-decoration: none; }
+    .nav-r a:hover { color: var(--ink); }
+    .pill { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 20px; border-radius: 10px; border: 1px solid var(--hair); background: #fff; font-size: 14px; font-weight: 500; cursor: pointer; text-decoration: none; color: var(--ink); }
+    .pill:hover { border-color: #c9c9c9; }
+    .pill.dark { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .pill.dark:hover { background: #000; }
+
+    /* ---------- question bar ---------- */
+    .askrow { padding: 28px 0 0; }
+    form { max-width: none; }
+    .field { display: flex; align-items: center; gap: 10px; border: 1px solid #cfcfcf; border-radius: 16px; background: #fff; padding: 8px 8px 8px 20px; transition: border-color .15s; }
+    .field:focus-within { border-color: var(--ink); }
+    textarea { flex: 1; min-height: 28px; max-height: 120px; resize: none; border: 0; outline: none; font-family: var(--display); font-size: 20px; letter-spacing: -0.015em; line-height: 1.35; padding: 10px 0; background: none; }
+    textarea::placeholder { color: #9a9a9a; }
+    .go { height: 48px; padding: 0 26px; border: 0; border-radius: 11px; background: var(--ink); color: #fff; font-weight: 500; font-size: 15px; cursor: pointer; white-space: nowrap; }
+    .go:hover { background: #000; }
+    .go:disabled { opacity: .55; cursor: default; }
+    .opts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 12px; font-size: 13px; color: var(--muted); }
+    .opts label { display: inline-flex; align-items: center; gap: 8px; }
+    select { font-size: 13px; padding: 6px 28px 6px 12px; border-radius: 999px; border: 1px solid var(--hair); background: var(--soft); color: var(--ink); }
+
+    /* ---------- hero (empty state) ---------- */
+    .hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 40px; align-items: center; padding: 56px 0 24px; }
+    .hero h2 { font-family: var(--display); font-weight: 500; font-size: clamp(44px, 5.6vw, 76px); line-height: 1; letter-spacing: -0.05em; }
+    .hero p { margin-top: 22px; font-size: 18px; color: var(--body); max-width: 440px; }
+    .hero .cta { margin-top: 28px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .stack { position: relative; height: 420px; }
+    .sheet { position: absolute; border-radius: 18px; padding: 20px 22px; }
+    .sheet .p { font-family: var(--mono); font-size: 12px; color: var(--ink); opacity: .75; }
+    .sheet .h { font-family: var(--display); font-size: 22px; font-weight: 500; letter-spacing: -0.03em; line-height: 1.15; margin-top: 8px; }
+    .s1 { left: 4%; top: 2%; width: 62%; height: 52%; background: var(--c2); transform: rotate(-5deg); }
+    .s2 { left: 30%; top: 14%; width: 62%; height: 52%; background: var(--c1); transform: rotate(4deg); }
+    .s3 { left: 12%; top: 38%; width: 78%; height: 56%; background: #fff; border: 1px solid var(--hair); box-shadow: 0 30px 60px -30px rgba(0,0,0,.35); padding: 24px 26px; }
+    .s3 .q { font-family: var(--display); font-size: 15px; color: var(--muted); letter-spacing: -0.01em; }
+    .s3 .a { margin-top: 10px; font-size: 17px; line-height: 1.55; color: var(--ink); }
+    .s3 code { font-family: var(--mono); font-size: 0.82em; background: var(--soft); padding: 1px 6px; border-radius: 5px; }
+    .chip { display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; padding: 7px 12px; border-radius: 10px; font-family: var(--mono); font-size: 12px; color: var(--ink); }
+    .chip span { display: inline-flex; width: 19px; height: 19px; align-items: center; justify-content: center; border-radius: 6px; background: rgba(255,255,255,.7); font-family: var(--ui); font-weight: 600; font-size: 11px; }
+    .samples { margin: 8px 0 0; max-width: none; }
+    .samples h3 { font-size: 14px; font-weight: 500; color: var(--muted); margin-bottom: 4px; }
+    .samples button { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--hair); padding: 16px 2px; font-family: var(--display); font-size: 20px; letter-spacing: -0.02em; color: var(--ink); cursor: pointer; }
+    .samples button:last-child { border-bottom: 1px solid var(--hair); }
+    .samples button:hover { background: var(--soft); }
+    .samples small { font-family: var(--ui); font-size: 13px; letter-spacing: 0; color: var(--muted); white-space: nowrap; }
+
+    /* ---------- result ---------- */
+    .result { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 48px; align-items: start; padding-top: 36px; }
+    .answer { font-size: 17.5px; line-height: 1.7; color: var(--body); max-width: 720px; }
+    .answer > * + * { margin-top: 14px; }
+    .answer h3 { font-family: var(--display); font-size: 20px; font-weight: 600; letter-spacing: -0.025em; color: var(--ink); margin-top: 28px; }
+    .answer ul, .answer ol { padding-left: 22px; }
+    .answer li { margin-top: 6px; }
+    .answer strong { font-weight: 600; color: var(--ink); }
+    .answer code { font-family: var(--mono); font-size: 0.82em; background: var(--soft); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+    .codewrap { position: relative; }
+    pre { background: var(--night); color: #ececec; padding: 18px 20px; border-radius: 14px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.65; }
+    .answer pre code, pre code { background: none; padding: 0; font-size: inherit; color: inherit; border-radius: 0; }
+    .copy { position: absolute; top: 10px; right: 10px; font-family: var(--ui); font-size: 12px; padding: 4px 11px; border-radius: 7px; cursor: pointer; border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.07); color: #ececec; }
+    .copy:hover { background: rgba(255,255,255,.16); }
+    a.fn { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px; margin: 0 2px; border-radius: 6px; color: var(--ink); font-family: var(--ui); font-size: 11.5px; font-weight: 600; text-decoration: none; vertical-align: 2px; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+    a.fn.on { box-shadow: 0 0 0 2px var(--ink); }
+    .stopped { font-size: 14px; background: #fff1e8; color: #8a3a12; border-radius: 10px; padding: 10px 14px; }
+    .failure { font-size: 15px; color: #b3321b; }
+
+    .stats { display: flex; flex-wrap: wrap; gap: 8px 40px; margin-top: 36px; padding-top: 22px; border-top: 1px solid var(--hair); max-width: 720px; }
+    .stats b { display: block; font-family: var(--display); font-size: 38px; font-weight: 500; letter-spacing: -0.05em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+    .stats span { font-size: 13px; color: var(--muted); }
+
+    details.trace { margin-top: 32px; max-width: 720px; }
+    details.trace summary { cursor: pointer; font-size: 14px; font-weight: 500; }
+    .log { margin-top: 12px; background: var(--night); border-radius: 14px; padding: 8px 20px; font-family: var(--mono); font-size: 12.5px; line-height: 1.6; color: #bdbdbd; }
+    .log > div { padding: 11px 0; border-bottom: 1px solid #262626; display: grid; grid-template-columns: 26px 1fr; gap: 6px; }
+    .log > div:last-child { border-bottom: 0; }
+    .log .n { color: #6a6a6a; }
+    .log .tool { color: var(--lime); font-weight: 500; }
+    .log .arg { color: #fff; word-break: break-word; }
+    .log .res { display: block; color: #8d8d8d; }
+    .log .bad { color: #ff9d70; }
+
+    aside { position: sticky; top: 20px; }
+    aside h3 { font-family: var(--display); font-size: 20px; font-weight: 600; letter-spacing: -0.025em; }
+    aside .list { margin-top: 14px; display: grid; gap: 8px; }
+    .src { display: block; border-radius: 14px; padding: 14px 16px 15px; text-decoration: none; color: var(--ink); transition: transform .15s, box-shadow .15s; }
+    .src .row { display: flex; align-items: center; gap: 10px; }
+    .src .no { width: 22px; height: 22px; border-radius: 7px; background: rgba(255,255,255,.7); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex: none; }
+    .src .p { font-family: var(--mono); font-size: 12.5px; word-break: break-all; line-height: 1.4; }
+    .src .t { margin-top: 6px; font-size: 12.5px; opacity: .7; padding-left: 32px; }
+    .src:hover { transform: translateX(-3px); }
+    .src.on { box-shadow: 0 0 0 2px var(--ink); }
+    .src.dim { background: #fff; border: 1px solid var(--hair); }
+    .src.dim .no { background: var(--soft); }
+    aside .none { margin-top: 10px; font-size: 14px; color: var(--muted); }
+    aside .sub { margin-top: 18px; font-size: 13px; color: var(--muted); }
+    @media (prefers-reduced-motion: reduce) { .src { transition: none; } .src:hover { transform: none; } }
+
+    .working { padding-top: 40px; max-width: 720px; }
+    .working p { font-size: 15px; color: var(--muted); }
+    .working .line { height: 15px; border-radius: 8px; background: var(--soft); margin-top: 14px; animation: pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse { 50% { opacity: .45; } }
+    @media (prefers-reduced-motion: reduce) { .working .line { animation: none; } }
+
+    /* ---------- evaluation table and banner ---------- */
+    .bench { margin-top: 80px; }
+    .bench h2 { font-family: var(--display); font-size: 32px; font-weight: 500; letter-spacing: -0.04em; }
+    .bench .sub { margin-top: 6px; font-size: 15px; color: var(--muted); max-width: 620px; }
+    .bench table { margin-top: 18px; border-collapse: collapse; font-size: 15px; width: 100%; max-width: 820px; }
+    .bench th { text-align: left; font-weight: 500; font-size: 13px; color: var(--muted); padding: 8px 20px 8px 0; border-bottom: 1px solid var(--ink); }
+    .bench td { padding: 14px 20px 14px 0; border-bottom: 1px solid var(--hair); font-variant-numeric: tabular-nums; }
+    .bench td.m { font-family: var(--display); font-size: 17px; font-weight: 500; letter-spacing: -0.02em; }
+    .banner { margin-top: 72px; background: var(--banner); }
+    .banner .wrap { display: flex; align-items: center; gap: 20px; padding-top: 22px; padding-bottom: 22px; justify-content: space-between; flex-wrap: wrap; }
+    .banner p { font-family: var(--display); font-size: 20px; letter-spacing: -0.02em; max-width: 640px; }
+    footer { padding: 28px 0 40px; font-size: 13px; color: var(--muted); }
+
+    @media (max-width: 920px) {
+      .hero { grid-template-columns: 1fr; }
+      .stack { height: 380px; }
+      .result { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+      aside { position: static; }
+    }
+    @media (max-width: 640px) {
+      .wrap { padding: 0 18px; }
+      .nav-r a.hide { display: none; }
+      .field { flex-direction: column; align-items: stretch; padding: 12px; }
+      .go { width: 100%; }
+      textarea { padding: 6px 4px; min-height: 56px; }
+      .samples button { flex-direction: column; gap: 2px; font-size: 18px; }
+      .bench table { display: block; overflow-x: auto; }
+      .bench th, .bench td { white-space: nowrap; }
+      .stats b { font-size: 32px; }
+    }
   </style>
 </head>
 <body>
-<main>
-  <h1>Scout</h1>
-  <p class="sub">Ask the FastAPI docs. Answers cite the pages they come from.</p>
-
-  <form id="form">
-    <label for="q" class="sr" style="position:absolute;left:-9999px">Question</label>
-    <textarea id="q" placeholder="How do I run code when my app starts up?" maxlength="500" required></textarea>
-    <div class="controls">
-      <label>Model <select id="model" aria-label="Model"></select></label>
-      <label>Chunking <select id="chunking" aria-label="Chunking strategy"><option>headings</option><option>fixed</option></select></label>
-      <button id="go" type="submit">Ask</button>
+  <header class="nav">
+    <div class="wrap">
+      <a class="logo" href="/"><span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>Scout</a>
+      <nav class="nav-r" aria-label="Primary">
+        <a class="hide" href="#bench">Evaluation</a>
+        <a class="pill dark" href="#q" id="navask">Ask a question</a>
+      </nav>
     </div>
-    <p class="hint" id="hint"></p>
-    <div class="samples" id="samples"></div>
-  </form>
+  </header>
 
-  <section id="out" aria-live="polite"></section>
-</main>
+  <main class="wrap">
+    <div class="askrow">
+      <form id="form">
+        <div class="field">
+          <label for="q" style="position:absolute;left:-9999px">Your question</label>
+          <textarea id="q" rows="1" maxlength="500" required placeholder="Ask how something works in FastAPI"></textarea>
+          <button id="go" class="go" type="submit">Ask Scout</button>
+        </div>
+        <div class="opts">
+          <label>Model <select id="model" aria-label="Model"></select></label>
+          <label>Chunking <select id="chunking" aria-label="Chunking strategy"><option value="headings">By heading</option><option value="fixed">Fixed windows</option></select></label>
+          <span>Ctrl+Enter to ask</span>
+        </div>
+      </form>
+    </div>
+    <section id="out" aria-live="polite"></section>
+    <section id="bench" class="bench" hidden></section>
+  </main>
+
+  <div id="banner" class="banner" hidden></div>
+  <footer><div class="wrap">Scout answers from the official FastAPI documentation. Check anything important against the linked pages.</div></footer>
 
 <script>
   const $ = (id) => document.getElementById(id);
-  const SAMPLES = ["How do I run code when my app starts and stops?", "How do I enable CORS?", "How do I split a big app across files?", "How do I set a rate limit?"];
+  const COLORS = ['var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)', 'var(--c5)', 'var(--c6)'];
+  const SAMPLES = [
+    ['How do I run code when my app starts and stops?', 'Lifespan events'],
+    ['My React frontend on another origin gets blocked. How do I fix it?', 'CORS'],
+    ['How do I split a big app across several files?', 'Routers and larger apps'],
+    ['How do I set a rate limit on my API?', 'Not in the docs, so Scout should say so'],
+  ];
 
-  const esc = (s) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const docUrl = (p) => 'https://fastapi.tiangolo.com/' + p.replace(/(^|\/)index\.md$/, '$1').replace(/\.md$/, '/');
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch { /* storage unavailable */ } },
+  };
 
-  // Escape first, then add formatting, so model output can never inject HTML.
-  function render(text) {
-    const blocks = [];
-    let t = esc(text).replace(/```[\w+-]*\n([\s\S]*?)```/g, (_, code) => { blocks.push(code); return `\u0000${blocks.length - 1}\u0000`; });
-    t = t.split(/\n{2,}/).map((para) => {
-      if (/^\u0000\d+\u0000$/.test(para.trim())) return para.trim();
-      let h = para.replace(/`([^`]+)`/g, '<code>$1</code>')
-        .replace(/\[([\w\-./]+\.md)\]/g, (_, p) => `<a class="cite" href="${docUrl(p)}" target="_blank" rel="noopener">${p}</a>`)
-        .replace(/\n/g, '<br>');
-      return `<p>${h}</p>`;
-    }).join('');
-    return t.replace(/\u0000(\d+)\u0000/g, (_, i) => `<pre><code>${blocks[i]}</code></pre>`);
+  /* ---------- markdown, escaped first so model output can never inject HTML ---------- */
+  const inline = (t) => t.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+  function renderMarkdown(raw, fnIndex) {
+    const codes = [];
+    let text = esc(raw).replace(/```[\w+#.-]*\n([\s\S]*?)```/g, (_, c) => { codes.push(c.replace(/\n$/, '')); return `\n\n\u0000${codes.length - 1}\u0000\n\n`; });
+    text = text.replace(/\[([\w\-./]+\.md)\]/g, (m, p) => (p in fnIndex ? `\u0001${fnIndex[p]}\u0001` : m));
+    const out = [];
+    for (const block of text.split(/\n{2,}/)) {
+      const b = block.trim();
+      if (!b) continue;
+      let m;
+      if ((m = b.match(/^\u0000(\d+)\u0000$/))) { out.push(`<div class="codewrap"><button type="button" class="copy">Copy</button><pre><code>${codes[m[1]]}</code></pre></div>`); continue; }
+      const lines = b.split('\n');
+      if (lines.every((l) => /^\s*[-*]\s+/.test(l))) { out.push('<ul>' + lines.map((l) => `<li>${inline(l.replace(/^\s*[-*]\s+/, ''))}</li>`).join('') + '</ul>'); continue; }
+      if (lines.every((l) => /^\s*\d+[.)]\s+/.test(l))) { out.push('<ol>' + lines.map((l) => `<li>${inline(l.replace(/^\s*\d+[.)]\s+/, ''))}</li>`).join('') + '</ol>'); continue; }
+      if (lines.length === 1 && (m = b.match(/^#{1,4}\s+(.*)$/))) { out.push(`<h3>${inline(m[1])}</h3>`); continue; }
+      out.push(`<p>${inline(b).replace(/\n/g, '<br>')}</p>`);
+    }
+    return out.join('').replace(/\u0001(\d+)\u0001/g, (_, n) =>
+      `<a class="fn" role="button" tabindex="0" data-n="${n}" aria-label="Source ${n}" style="background:${COLORS[(n - 1) % COLORS.length]}">${n}</a>`);
+  }
+
+  /* ---------- result view ---------- */
+  function stepLine(s, i) {
+    const n = `<span class="n">${i + 1}</span>`;
+    if (s.kind === 'tool') {
+      const arg = s.tool === 'search_docs' ? `"${esc(s.input.query || '')}"` : s.tool === 'read_page' ? esc(s.input.path || '') :
+        s.tool === 'list_pages' ? esc(s.input.prefix || '/') : esc(JSON.stringify(s.input).slice(0, 80));
+      const res = !s.ok ? '<span class="res bad">failed; the model was told and tried again</span>'
+        : s.pages && s.pages.length ? `<span class="res">${s.pages.length} page${s.pages.length === 1 ? '' : 's'}: ${esc(s.pages.slice(0, 3).join(', '))}${s.pages.length > 3 ? ', ...' : ''}</span>`
+        : `<span class="res">${s.result_chars.toLocaleString()} characters returned</span>`;
+      return `<div>${n}<span><span class="tool">${esc(s.tool)}</span> <span class="arg">${arg}</span>${res}</span></div>`;
+    }
+    if (s.kind === 'answer') return `<div>${n}<span><span class="tool">answer</span><span class="res">wrote the response</span></span></div>`;
+    return `<div>${n}<span class="bad">${esc(s.detail || s.kind)}</span></div>`;
   }
 
   function renderResult(r) {
-    const steps = r.steps.map((s) => {
-      if (s.kind === 'tool') return `<li><code>${esc(s.tool)}</code>(${esc(JSON.stringify(s.input))})${s.ok ? '' : ' <span class="err">failed</span>'}</li>`;
-      if (s.kind === 'answer') return '<li>wrote the answer</li>';
-      return `<li class="err">${esc(s.detail || s.kind)}</li>`;
-    }).join('');
-    const warn = r.stopped !== 'answered' ? `<span class="chip warn">stopped: ${esc(r.stopped)}</span>` : '';
-    const body = r.error ? `<p class="err">${esc(r.error)}</p>` : render(r.answer || '(no answer)');
-    return `<div class="answer">${body}
-      <div class="meta">${warn}
-        <span class="chip">${r.latency_s.toFixed(1)}s</span>
-        <span class="chip">${(r.input_tokens + r.output_tokens).toLocaleString()} tokens</span>
-        <span class="chip">$${r.cost_usd.toFixed(4)}</span>
-        <span class="chip">${r.cited_pages.length} cited</span>
+    const fnIndex = {}, order = [];
+    for (const m of (r.answer || '').matchAll(/\[([\w\-./]+\.md)\]/g)) {
+      if (r.cited_pages.includes(m[1]) && !(m[1] in fnIndex)) { order.push(m[1]); fnIndex[m[1]] = order.length; }
+    }
+    const reads = r.retrieved_pages.filter((p) => !order.includes(p));
+    const modelCalls = new Set(r.steps.map((s) => s.step)).size;
+    const warn = r.stopped === 'answered' ? '' :
+      `<p class="stopped">${r.stopped === 'error' ? 'The model call failed.' : r.stopped === 'step_limit' ? 'Scout ran out of steps before finishing.' : 'Scout hit its token budget before finishing.'}${r.stopped === 'error' ? '' : ' The text below is the last thing it wrote.'}</p>`;
+    const body = r.error ? `<p class="failure">${esc(r.error)}</p>` : renderMarkdown(r.answer || '(no answer)', fnIndex);
+
+    const src = order.map((p, i) => `<a class="src" id="src-${i + 1}" href="${docUrl(p)}" target="_blank" rel="noopener" style="background:${COLORS[i % COLORS.length]}"><div class="row"><span class="no">${i + 1}</span><span class="p">${esc(p)}</span></div><div class="t">Cited in the answer</div></a>`).join('');
+    const extra = reads.map((p) => `<a class="src dim" href="${docUrl(p)}" target="_blank" rel="noopener"><div class="row"><span class="no">-</span><span class="p">${esc(p)}</span></div><div class="t">Read, not cited</div></a>`).join('');
+    const rail = `<aside><h3>Sources</h3>${order.length || reads.length ? `<div class="list">${src}${extra}</div>` :
+      '<p class="none">The answer cites no pages. If it makes claims about FastAPI, check them against the docs.</p>'}
+      <p class="sub">Each link opens the official FastAPI documentation.</p></aside>`;
+
+    const cost = r.cost_usd < 0.01 ? r.cost_usd.toFixed(4) : r.cost_usd.toFixed(3);
+    return `<div class="result"><div>
+      <div class="answer">${warn}${body}</div>
+      <div class="stats">
+        <div><b>${r.latency_s.toFixed(1)}s</b><span>to answer</span></div>
+        <div><b>${(r.input_tokens + r.output_tokens).toLocaleString()}</b><span>tokens</span></div>
+        <div><b>$${cost}</b><span>cost</span></div>
+        <div><b>${modelCalls}</b><span>model call${modelCalls === 1 ? '' : 's'}</span></div>
       </div>
-      <details><summary>How it answered (${r.steps.length} steps)</summary><ol>${steps}</ol></details></div>`;
+      <details class="trace"><summary>How Scout found this (${r.steps.length} steps)</summary><div class="log">${r.steps.map(stepLine).join('')}</div></details>
+    </div>${rail}</div>`;
   }
 
-  async function init() {
-    SAMPLES.forEach((s) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = s; b.onclick = () => { $('q').value = s; $('q').focus(); }; $('samples').appendChild(b); });
-    try {
-      const cfg = await (await fetch('/api/config')).json();
-      $('model').innerHTML = cfg.models.map((m) => `<option>${esc(m)}</option>`).join('');
-      if (!cfg.models.length) { $('hint').textContent = 'No models available. Set ANTHROPIC_API_KEY or start Ollama, then restart.'; $('go').disabled = true; }
-    } catch { $('hint').textContent = 'Could not reach the Scout server.'; $('go').disabled = true; }
+  /* ---------- empty state ---------- */
+  function showEmpty() {
+    $('out').innerHTML = `
+      <div class="hero">
+        <div>
+          <h2>Ask the docs. See the sources.</h2>
+          <p>Scout searches the FastAPI documentation, reads the pages it needs, and numbers every source it uses in the answer.</p>
+          <div class="cta"><a class="pill dark" href="#q" data-focus>Ask a question</a><a class="pill" href="#bench">See how it scores</a></div>
+        </div>
+        <div class="stack" aria-hidden="true">
+          <div class="sheet s1"><div class="p">tutorial/cors.md</div><div class="h">CORS</div></div>
+          <div class="sheet s2"><div class="p">tutorial/bigger-applications.md</div><div class="h">Bigger Applications</div></div>
+          <div class="sheet s3"><div class="q">How do I run code when my app starts?</div>
+            <div class="a">Use a lifespan function. Code before the <code>yield</code> runs at startup and code after it runs at shutdown. <a class="fn" style="background:var(--c4);pointer-events:none">1</a></div>
+            <div class="chip" style="background:var(--c4)"><span>1</span>advanced/events.md</div></div>
+        </div>
+      </div>
+      <div class="samples"><h3>Try one of these</h3>${SAMPLES.map(([q, note]) => `<button type="button" data-q="${esc(q)}"><span>${esc(q)}</span><small>${esc(note)}</small></button>`).join('')}</div>`;
   }
 
-  $('form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    $('go').disabled = true; $('go').textContent = 'Thinking...';
-    $('out').innerHTML = '';
+  let timer = null;
+  function showWorking() {
+    const t0 = performance.now();
+    $('out').innerHTML = `<div class="working"><p id="wk">Searching the docs, 0s</p><div class="line" style="width:92%"></div><div class="line" style="width:78%"></div><div class="line" style="width:85%"></div></div>`;
+    clearInterval(timer);
+    timer = setInterval(() => { const el = $('wk'); if (el) el.textContent = `Searching the docs, ${Math.round((performance.now() - t0) / 1000)}s`; }, 500);
+  }
+
+  async function ask() {
+    const q = $('q').value.trim();
+    if (q.length < 3) return;
+    $('go').disabled = true; $('go').textContent = 'Working...';
+    showWorking();
     try {
       const res = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: $('q').value, model: $('model').value, chunking: $('chunking').value }) });
+        body: JSON.stringify({ question: q, model: $('model').value, chunking: $('chunking').value }) });
       const data = await res.json();
-      $('out').innerHTML = res.ok ? renderResult(data) : `<p class="err">${esc(typeof data.detail === 'string' ? data.detail : 'Request failed')}</p>`;
-    } catch { $('out').innerHTML = '<p class="err">Request failed.</p>'; }
-    $('go').disabled = false; $('go').textContent = 'Ask';
-  });
+      clearInterval(timer);
+      $('out').innerHTML = res.ok ? renderResult(data) :
+        `<p class="failure" style="padding-top:32px">${esc(typeof data.detail === 'string' ? data.detail : 'The request failed. Check the server window for details.')}</p>`;
+    } catch {
+      clearInterval(timer);
+      $('out').innerHTML = '<p class="failure" style="padding-top:32px">Could not reach the Scout server. Make sure it is still running.</p>';
+    }
+    $('go').disabled = false; $('go').textContent = 'Ask Scout';
+  }
 
+  function highlight(n) {
+    document.querySelectorAll('.src.on, a.fn.on').forEach((el) => el.classList.remove('on'));
+    const src = $('src-' + n);
+    if (src) { src.classList.add('on'); src.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }
+    document.querySelectorAll(`a.fn[data-n="${n}"]`).forEach((el) => el.classList.add('on'));
+  }
+
+  document.addEventListener('click', (e) => {
+    const fn = e.target.closest('a.fn[data-n]'); if (fn) { highlight(fn.dataset.n); return; }
+    const sample = e.target.closest('.samples button'); if (sample) { $('q').value = sample.dataset.q; $('q').focus(); return; }
+    const focus = e.target.closest('[data-focus], #navask'); if (focus) { e.preventDefault(); $('q').focus(); window.scrollTo({ top: 0 }); return; }
+    const copy = e.target.closest('.copy');
+    if (copy) {
+      const code = copy.parentElement.querySelector('code').textContent;
+      (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject()).then(() => { copy.textContent = 'Copied'; }, () => { copy.textContent = 'Copy failed'; })
+        .finally(() => setTimeout(() => { copy.textContent = 'Copy'; }, 1500));
+    }
+  });
+  document.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('a.fn[data-n]')) { e.preventDefault(); highlight(e.target.dataset.n); } });
+  $('form').addEventListener('submit', (e) => { e.preventDefault(); ask(); });
+  $('q').addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); ask(); } });
+
+  /* ---------- startup ---------- */
+  const shortName = (n) => {
+    const m = n.split(' / ')[0].split(':').pop();
+    if (!m.startsWith('claude-')) return m;
+    const [, family, ...ver] = m.split('-');
+    return `Claude ${family[0].toUpperCase() + family.slice(1)} ${ver.join('.')}`;
+  };
+  const pct = (v) => (v == null ? 'n/a' : Math.round(v * 100) + '%');
+
+  async function init() {
+    showEmpty();
+    try {
+      const cfg = await (await fetch('/api/config')).json();
+      $('model').innerHTML = cfg.models.map((m) => `<option value="${esc(m)}">${esc(shortName(m))}${m.startsWith('ollama') ? ' (local)' : ''}</option>`).join('');
+      const saved = store.get('scout.model'); if (saved && cfg.models.includes(saved)) $('model').value = saved;
+      $('model').addEventListener('change', () => store.set('scout.model', $('model').value));
+      if (!cfg.models.length) { $('go').disabled = true; $('out').insertAdjacentHTML('afterbegin', '<p class="failure" style="padding-top:24px">No models are available. Set ANTHROPIC_API_KEY or start Ollama, then restart Scout.</p>'); }
+    } catch { $('go').disabled = true; }
+    try {
+      const ev = await (await fetch('/api/eval')).json();
+      if (ev.available) {
+        const best = ev.models.filter((m) => m.name.startsWith('anthropic')).sort((a, b) => (b.score || 0) - (a.score || 0))[0];
+        $('bench').hidden = false;
+        $('bench').innerHTML = `<h2>How well it works</h2><p class="sub">Measured on ${ev.n_questions} questions with known answers, graded against reference answers. Three of them are not covered by the docs, to check that Scout says so.</p>
+          <table><thead><tr><th>Model</th><th>Answer score</th><th>Cites the right page</th><th>Median time</th><th>Cost per question</th></tr></thead><tbody>${
+            ev.models.map((m) => `<tr><td class="m">${esc(shortName(m.name))}</td><td>${pct(m.score)}</td><td>${pct(m.citation)}</td><td>${m.latency_p50.toFixed(1)}s</td><td>$${m.cost.toFixed(4)}</td></tr>`).join('')}</tbody></table>`;
+        if (ev.report && best) {
+          $('banner').hidden = false;
+          $('banner').innerHTML = `<div class="wrap"><p>${esc(shortName(best.name))} answered ${pct(best.score)} of the questions correctly. See the full evaluation, including where Scout still fails.</p><a class="pill dark" href="/report">Read the evaluation</a></div>`;
+        }
+      }
+    } catch { /* the evaluation strip is optional */ }
+  }
   init();
 </script>
 </body>

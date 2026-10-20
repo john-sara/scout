@@ -11,6 +11,7 @@ if you ever expose it, keep the rate limit and add real authentication first.
 """
 from __future__ import annotations
 
+import json
 import os
 import time
 from collections import defaultdict, deque
@@ -19,6 +20,7 @@ from pathlib import Path
 
 import requests
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -27,6 +29,7 @@ from scout.agent import run_agent
 from scout.llm import ProviderError, make_provider
 
 FRONTEND = Path(__file__).parent / "frontend"
+RESULTS = Path(__file__).parent / "results"
 MAX_QUESTION_CHARS = 500
 RATE_LIMIT = 12  # questions per minute per client
 
@@ -89,6 +92,39 @@ def ask(body: AskRequest, request: Request):
         raise HTTPException(400, str(e))
     result = run_agent(body.question, provider, model, tools_for(body.chunking))
     return result.to_dict()
+
+
+def _latest_run(*dirs: Path):
+    for d in dirs:
+        files = sorted(d.glob("run-*.json"), key=lambda p: p.stat().st_mtime) if d.exists() else []
+        if files:
+            return json.loads(files[-1].read_text(encoding="utf-8"))
+    return None
+
+
+@app.get("/api/eval")
+def eval_summary():
+    """Benchmark numbers from the most recent saved runs, for the strip at the bottom of the page."""
+    main = _latest_run(RESULTS / "v2", RESULTS)
+    if not main:
+        return {"available": False}
+    local = _latest_run(RESULTS / "ollama")
+    summaries = dict(main["summaries"])
+    if local:
+        summaries.update(local["summaries"])
+    models = [{"name": name, "score": s["accuracy_answerable"], "abstain": s["abstention_accuracy"],
+               "citation": s["citation_hit"], "latency_p50": s["latency_p50_s"], "cost": s["mean_cost_usd"]}
+              for name, s in summaries.items()]
+    return {"available": True, "n_questions": main["meta"]["n_questions"], "judge": main["meta"]["judge"],
+            "models": models, "report": (RESULTS / "report.html").exists()}
+
+
+@app.get("/report")
+def report():
+    path = RESULTS / "report.html"
+    if not path.exists():
+        raise HTTPException(404, "No report yet. Run evals/report.py.")
+    return FileResponse(path)
 
 
 app.mount("/", StaticFiles(directory=FRONTEND, html=True), name="frontend")

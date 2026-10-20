@@ -56,6 +56,27 @@ class AppTests(unittest.TestCase):
                      for _ in range(3)]
         self.assertEqual(codes, [200, 200, 429])
 
+    def test_eval_summary_reads_saved_runs(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        run = {"meta": {"n_questions": 33, "judge": "anthropic:claude-opus-5-5"},
+               "summaries": {"anthropic:claude-haiku-5-5 / headings": {"accuracy_answerable": 0.9, "abstention_accuracy": 1.0,
+                             "citation_hit": 0.9, "latency_p50_s": 6.0, "mean_cost_usd": 0.002}}, "records": []}
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "run-1.json").write_text(json.dumps(run))
+            with mock.patch.object(scout_app, "RESULTS", Path(tmp)):
+                body = self.client.get("/api/eval").json()
+                self.assertEqual(self.client.get("/report").status_code, 404)
+        self.assertTrue(body["available"])
+        self.assertEqual(body["models"][0]["score"], 0.9)
+
+    def test_eval_summary_when_no_results(self):
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(scout_app, "RESULTS", Path(tmp)):
+            self.assertEqual(self.client.get("/api/eval").json(), {"available": False})
+
     def test_frontend_is_served(self):
         r = self.client.get("/")
         self.assertEqual(r.status_code, 200)
