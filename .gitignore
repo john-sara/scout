@@ -6,3 +6,6 @@ data/fastapi_docs/
 .env
 results/*.json
 .DS_Store
+results/*.json
+results/*.txt
+results/smoke/

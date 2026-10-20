@@ -159,7 +159,7 @@ class OllamaProvider:
 
     def complete(self, model, system, messages, tools, max_tokens):
         body = {"model": model, "stream": False, "messages": to_ollama_messages(system, messages),
-                "options": {"num_predict": max_tokens}}
+                "options": {"num_predict": max_tokens, "num_ctx": 8192}}
         if tools:
             body["tools"] = to_ollama_tools(tools)
         data = _post_with_retry(f"{self.host}/api/chat", {}, body, self.retries, self.timeout, label="Ollama")
