@@ -39,6 +39,9 @@ $env:ANTHROPIC_API_KEY = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bst
 Clear-Host
 if (-not $env:ANTHROPIC_API_KEY) { Fail "No key was entered." }
 
+& $py scripts\check_key.py
+if ($LASTEXITCODE -ne 0) { Fail "Your API key was not accepted. Run this again and paste the key carefully (right-click to paste, then Enter)." }
+
 Write-Host "Running llama3.1 on all 33 questions. This is free to run, but slow on a local GPU." -ForegroundColor Cyan
 & $py evals\run_eval.py --models ollama:llama3.1 --judge anthropic:claude-opus-5-5 --max-cost 0.6 --out results\ollama
 if ($LASTEXITCODE -ne 0) { Fail "The local-model run failed." }

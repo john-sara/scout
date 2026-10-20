@@ -80,6 +80,9 @@ Clear-Host
 if (-not $env:ANTHROPIC_API_KEY) { Fail "No key was entered." }
 Write-Host "Key received (hidden)." -ForegroundColor Green
 
+& $py scripts\check_key.py
+if ($LASTEXITCODE -ne 0) { Fail "Your API key was not accepted. Run this again and paste the key carefully (right-click to paste, then Enter)." }
+
 Step "7/8 Quick check with 2 questions (costs a few cents)"
 & $py evals\run_eval.py --models anthropic:claude-haiku-5-5 --judge anthropic:claude-opus-5-5 --limit 2 --max-cost 0.5 --out results\smoke
 if ($LASTEXITCODE -ne 0) { Fail "The quick check failed. This usually means a wrong key or a model name the API does not accept." }

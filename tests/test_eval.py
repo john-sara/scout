@@ -84,6 +84,26 @@ class SummaryTests(unittest.TestCase):
         self.assertEqual(s["mean_tokens"], 150)
 
 
+class FailFastTests(unittest.TestCase):
+    def test_regrade_stops_after_three_judge_failures(self):
+        from evals import regrade
+        from scout.llm import ProviderError
+        rec = {"config": "c", "answer": "a", "cited": [], "retrieved": [], "steps": [],
+               "row": {"id": "q01", "question": "q", "verdict": "correct", "latency_s": 1.0, "cost_usd": 0.0,
+                       "input_tokens": 1, "output_tokens": 1, "stopped": "answered", "model_calls": 1}}
+        judge = FakeProvider([ProviderError("401")] * 6)
+        with tempfile.TemporaryDirectory() as tmp:
+            run_file = Path(tmp) / "run.json"
+            run_file.write_text(json.dumps({"meta": {}, "summaries": {}, "records": [rec] * 5}))
+            argv = ["regrade", str(run_file), "--out", tmp]
+            with mock.patch.object(regrade, "make_provider", lambda spec: (judge, "judge")), \
+                    mock.patch.object(sys, "argv", argv):
+                with self.assertRaises(SystemExit) as ctx:
+                    regrade.main()
+        self.assertIn("3 times in a row", str(ctx.exception))
+        self.assertEqual(len(judge.calls), 3)
+
+
 class EndToEndTests(unittest.TestCase):
     def test_full_run_offline_with_fake_providers(self):
         def cand():

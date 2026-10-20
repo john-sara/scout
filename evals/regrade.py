@@ -35,6 +35,7 @@ def main():
     judge, judge_model = make_provider(args.judge)
 
     spent, rows_by_config, failures = 0.0, {}, {}
+    judge_failures = 0
     for rec in run["records"]:
         old = rec["row"]
         q = questions[old["id"]]
@@ -42,6 +43,11 @@ def main():
             j = judge_answer(judge, judge_model, q, rec["answer"], docs)
         except ProviderError as e:
             j = {"verdict": "ungraded", "reason": f"judge failed: {e}", "input_tokens": 0, "output_tokens": 0}
+            judge_failures += 1
+            if judge_failures >= 3:
+                raise SystemExit(f"Stopping: the judge failed 3 times in a row ({e}). Check your API key and credits.")
+        else:
+            judge_failures = 0
         spent += cost_usd(judge_model, j["input_tokens"], j["output_tokens"])
         result = {"cited_pages": rec["cited"], "retrieved_pages": rec["retrieved"], "steps": rec["steps"]}
         row = grade_row(q, result, j["verdict"])

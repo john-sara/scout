@@ -58,6 +58,9 @@ Clear-Host
 if (-not $env:ANTHROPIC_API_KEY) { Fail "No key was entered." }
 Write-Host "Key received (hidden)." -ForegroundColor Green
 
+& $py scripts\check_key.py
+if ($LASTEXITCODE -ne 0) { Fail "Your API key was not accepted. Run this again and paste the key carefully (right-click to paste, then Enter)." }
+
 Step "4/6 Re-grade the first run with the fixed judge (cap 1 dollar)"
 & $py evals\regrade.py $v1.FullName --judge anthropic:claude-opus-5-5 --max-cost 1.0 --out results
 if ($LASTEXITCODE -ne 0) { Fail "Re-grading failed." }

@@ -191,6 +191,7 @@ def main():
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
     spent = 0.0
+    judge_failures = 0
     all_rows: dict[str, list[dict]] = {}
     records: list[dict] = []
     for chunking in args.chunking:
@@ -205,8 +206,12 @@ def main():
                 try:
                     j = judge_answer(judge, judge_model, q, result["answer"], tools.docs) if result["stopped"] != "error" else \
                         {"verdict": "ungraded", "reason": result["error"], "input_tokens": 0, "output_tokens": 0}
+                    judge_failures = 0
                 except ProviderError as e:
                     j = {"verdict": "ungraded", "reason": f"judge failed: {e}", "input_tokens": 0, "output_tokens": 0}
+                    judge_failures += 1
+                    if judge_failures >= 3:
+                        raise SystemExit(f"Stopping: the judge failed 3 times in a row ({e}). Check your API key and credits.")
                 spent += result["cost_usd"] + cost_usd(judge_model, j["input_tokens"], j["output_tokens"])
                 row = grade_row(q, result, j["verdict"])
                 row.update(id=q["id"], question=q["question"], reason=j["reason"], latency_s=result["latency_s"],
