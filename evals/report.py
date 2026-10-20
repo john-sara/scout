@@ -60,6 +60,30 @@ def load_results(results: Path):
     return main, local, before
 
 
+LABELS = {"bm25": "BM25", "embed": "Embeddings", "hybrid": "Hybrid"}
+
+
+def load_embedding_rankings(results: Path):
+    for path in (results / "published" / "embeddings.json", results / "embeddings.json"):
+        if path.exists():
+            return json.loads(path.read_text(encoding="utf-8"))
+    return None
+
+
+def metrics_from_rankings(rankings: dict, questions: list, ks=(1, 3, 5)):
+    answerable = [q for q in questions if q["expected_pages"]]
+    hits, rr = {k: 0 for k in ks}, 0.0
+    for q in answerable:
+        ranked = rankings.get(q["id"], [])
+        rank = next((i for i, p in enumerate(ranked, 1) if p in set(q["expected_pages"])), None)
+        if rank:
+            rr += 1 / rank
+            for k in ks:
+                hits[k] += rank <= k
+    n = len(answerable)
+    return {f"hit@{k}": hits[k] / n for k in ks} | {"mrr": rr / n}
+
+
 def retrieval_rows():
     docs = load_docs()
     questions = load_questions(ROOT / "evals" / "questions.jsonl")
@@ -166,6 +190,25 @@ def build(results: Path) -> str:
             f"<td class='num'>{pct(m['hit@5'])}</td><td class='num'>{m['mrr']:.2f}</td></tr>")
     retr_table = ("<table><tr><th>Chunking</th><th>Chunks</th><th>Right page in top 1</th><th>Top 3</th><th>Top 5</th>"
                   "<th>MRR</th></tr>" + "".join(retr_rows) + "</table>")
+    retr_intro = ("Keyword search (BM25) over two chunking strategies, no model involved. Hit means a correct page "
+                  "appears in the top results for a question.")
+    emb = load_embedding_rankings(results)
+    if emb:
+        questions = load_questions(ROOT / "evals" / "questions.jsonl")
+        chunk_counts = {name: n for name, n, _ in retr}
+        emb_rows = []
+        for chunking, by_method in emb["rankings"].items():
+            for method, rankings in by_method.items():
+                m = metrics_from_rankings(rankings, questions)
+                emb_rows.append(
+                    f"<tr><td class='model'>{'Fixed 200-word windows' if chunking == 'fixed' else 'Split on headings'}</td>"
+                    f"<td>{LABELS[method]}</td><td class='num'>{pct(m['hit@1'])}</td><td class='num'>{pct(m['hit@3'])}</td>"
+                    f"<td class='num'>{pct(m['hit@5'])}</td><td class='num'>{m['mrr']:.2f}</td></tr>")
+        retr_table = ("<table><tr><th>Chunking</th><th>Retrieval</th><th>Right page in top 1</th><th>Top 3</th><th>Top 5</th>"
+                      "<th>MRR</th></tr>" + "".join(emb_rows) + "</table>")
+        retr_intro = (f"Keyword search (BM25), embeddings from {esc(emb['model'])} running locally in Ollama, and a hybrid that "
+                      "merges both rankings, each over two chunking strategies. No chat model is involved. Hit means a "
+                      "correct page appears in the top results. With 30 questions, one question is worth 3 points.")
 
     before_html = ""
     if before:
@@ -221,8 +264,8 @@ def build(results: Path) -> str:
 <p class="sub">Same questions, same tools, same retrieval. The answer score counts correct as 1 and partially correct as 0.5 on the {n_q - 3} questions the docs can answer.</p>
 {models_table}
 {before_html}
-<h2>Retrieval: how to split the docs</h2>
-<p class="sub">Keyword search (BM25) over two chunking strategies, no model involved. Hit means a correct page appears in the top results for a question.</p>
+<h2>Retrieval: chunking and embeddings</h2>
+<p class="sub">{retr_intro}</p>
 {retr_table}
 {fail_html}
 <p class="note">Questions and reference answers were written from the documentation and have not been independently reviewed. The judge is an LLM, so individual verdicts can be wrong; the reasons are saved in the JSON output. Costs use Anthropic's published prices on 2026-10-20 and local models cost nothing to run.</p>
