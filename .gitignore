@@ -9,3 +9,7 @@ results/*.json
 results/*.json
 results/*.txt
 results/smoke/
+results/*.md
+!results/retrieval.md
+results/v2/
+results/ollama/

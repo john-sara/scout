@@ -22,6 +22,9 @@ CODE_NOTE = """
 You also have a run_python tool. When an answer depends on exact behavior, you may run a short snippet to \
 check it before answering. Do not run code that touches files, the network or the system."""
 
+FINAL_STEP_NOTE = ("You have no tool calls left. Write your final answer now using what you have already found, "
+                   "citing the pages you used. If something is missing, say what is missing.")
+
 _CITATION = re.compile(r"\[([\w\-./]+\.md)\]")
 
 
@@ -74,6 +77,8 @@ def run_agent(
     last_text = ""
 
     for step in range(1, max_steps + 1):
+        if step == max_steps and step > 1:
+            messages.append({"role": "user", "content": FINAL_STEP_NOTE})
         try:
             resp = provider.complete(model, system, messages, tools.specs, max_tokens)
         except ProviderError as e:

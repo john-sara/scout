@@ -87,8 +87,23 @@ class ToolTests(unittest.TestCase):
     def test_long_page_is_truncated(self):
         tools = DocTools(BM25Index([]), {"big.md": "x" * 20000})
         r = tools.call("read_page", {"path": "big.md"})
-        self.assertIn("truncated", r.text)
-        self.assertLess(len(r.text), 7000)
+        self.assertIn("offset=6000", r.text)
+        self.assertLess(len(r.text), 6200)
+
+    def test_read_page_offset_pages_through_the_whole_page(self):
+        text = "".join(chr(97 + i % 26) for i in range(14000))
+        tools = DocTools(BM25Index([]), {"big.md": text})
+        out, offset = "", 0
+        while True:
+            r = tools.call("read_page", {"path": "big.md", "offset": offset})
+            self.assertFalse(r.is_error)
+            body = r.text.split("\n\n[showing")[0]
+            out += body
+            if "[showing" not in r.text:
+                break
+            offset += len(body)
+        self.assertEqual(out, text)
+        self.assertTrue(tools.call("read_page", {"path": "big.md", "offset": 99999}).is_error)
 
     def test_list_pages_prefix(self):
         r = make_tools().call("list_pages", {"prefix": "tutorial/"})
@@ -146,6 +161,15 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(r.stopped, "error")
         self.assertIn("500", r.error)
 
+    def test_last_step_asks_for_a_final_answer(self):
+        from scout.agent import FINAL_STEP_NOTE
+        p = FakeProvider([tool_turn("search_docs", {"query": "a"}, i=1), tool_turn("search_docs", {"query": "b"}, i=2),
+                          final("Here is the answer [tutorial/body.md].")])
+        r = run_agent("q", p, "m", make_tools(), max_steps=3)
+        self.assertEqual(r.stopped, "answered")
+        self.assertNotIn(FINAL_STEP_NOTE, [m.get("content") for m in p.calls[1]["messages"]])
+        self.assertEqual(p.calls[2]["messages"][-1], {"role": "user", "content": FINAL_STEP_NOTE})
+
     def test_extract_citations_dedupes(self):
         self.assertEqual(extract_citations("[a.md] [a.md] [b.md]", {"a.md", "b.md"}), ["a.md", "b.md"])
 
@@ -167,6 +191,12 @@ class WireFormatTests(unittest.TestCase):
         self.assertEqual([b["tool_use_id"] for b in results], ["t1", "t2"])
         self.assertTrue(results[1]["is_error"])
         self.assertNotIn("is_error", results[0])
+
+    def test_anthropic_merges_a_user_note_after_tool_results(self):
+        msgs = self.MESSAGES + [{"role": "user", "content": "answer now"}]
+        out = to_anthropic_messages(msgs)
+        self.assertEqual([m["role"] for m in out], ["user", "assistant", "user"])
+        self.assertEqual(out[2]["content"][-1], {"type": "text", "text": "answer now"})
 
     def test_ollama_format(self):
         out = to_ollama_messages("sys", self.MESSAGES)

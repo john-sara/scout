@@ -30,17 +30,20 @@ from scout.pricing import cost_usd  # noqa: E402
 
 JUDGE_SYSTEM = """You grade answers to questions about the FastAPI documentation.
 
-You are given a question, a reference answer written from the documentation, and a candidate answer.
+You are given a question, a short reference answer, the relevant documentation pages, and a candidate answer.
 Grade the candidate against the reference:
-- correct: the candidate gives the same essential solution as the reference, with no wrong claims.
-- partial: the candidate is on the right track but misses an essential part, or adds a wrong detail.
-- incorrect: the candidate is wrong, off topic, or invents features the reference does not support.
+- correct: the candidate gives the same essential solution as the reference. Extra details are fine when the
+  documentation pages support them, even if the reference does not mention them.
+- partial: the candidate is on the right track but misses an essential part, or states something the
+  documentation pages contradict.
+- incorrect: the candidate is wrong, off topic, does not actually answer (for example it only says it will keep
+  searching), or invents features that appear nowhere in the documentation pages.
 
 If the reference says the documentation does not cover the topic, the candidate is correct only if it
 says the documentation does not cover it (it may still add clearly labeled general advice). If it
 confidently describes a feature or steps instead, it is incorrect.
 
-Reply with only JSON: {"verdict": "correct" | "partial" | "incorrect", "reason": "<one sentence>"}"""
+Reply with only JSON: {"verdict": "correct" | "partial" | "incorrect", "reason": "<at most 25 words>"}"""
 
 SCORES = {"correct": 1.0, "partial": 0.5, "incorrect": 0.0}
 
@@ -60,17 +63,36 @@ def parse_verdict(text: str) -> tuple[str, str]:
                 return verdict, str(data.get("reason", ""))
         except json.JSONDecodeError:
             pass
+    # A reply cut off mid-sentence can still contain a usable verdict.
+    m = re.search(r'"verdict"\s*:\s*"(correct|partial|incorrect)"', text, re.I)
+    if m:
+        return m.group(1).lower(), "(reason cut off)"
     return "ungraded", f"judge reply could not be parsed: {text[:120]!r}"
 
 
-def judge_answer(judge: Provider, judge_model: str, question: dict, answer: str) -> dict:
+def source_text(question: dict, docs: dict[str, str] | None, per_page: int = 3000, max_pages: int = 2) -> str:
+    if not docs:
+        return ""
+    parts = [f"[{p}]\n{docs[p][:per_page]}" for p in question["expected_pages"][:max_pages] if p in docs]
+    return "\n\n".join(parts)
+
+
+def judge_answer(judge: Provider, judge_model: str, question: dict, answer: str, docs: dict[str, str] | None = None) -> dict:
     if not answer.strip():
         return {"verdict": "incorrect", "reason": "empty answer", "input_tokens": 0, "output_tokens": 0}
+    sources = source_text(question, docs)
     prompt = (f"Question: {question['question']}\n\nReference answer: {question['reference']}\n\n"
-              f"Candidate answer:\n{answer}")
-    resp = judge.complete(judge_model, JUDGE_SYSTEM, [{"role": "user", "content": prompt}], [], 300)
-    verdict, reason = parse_verdict(resp.text)
-    return {"verdict": verdict, "reason": reason, "input_tokens": resp.input_tokens, "output_tokens": resp.output_tokens}
+              + (f"Documentation pages:\n{sources}\n\n" if sources else "")
+              + f"Candidate answer:\n{answer}")
+    in_tok = out_tok = 0
+    for attempt in range(2):  # one retry if the reply is empty or unparseable
+        resp = judge.complete(judge_model, JUDGE_SYSTEM, [{"role": "user", "content": prompt}], [], 700)
+        in_tok += resp.input_tokens
+        out_tok += resp.output_tokens
+        verdict, reason = parse_verdict(resp.text)
+        if verdict != "ungraded":
+            break
+    return {"verdict": verdict, "reason": reason, "input_tokens": in_tok, "output_tokens": out_tok}
 
 
 def grade_row(question: dict, result: dict, verdict: str) -> dict:
@@ -181,7 +203,7 @@ def main():
             for q in questions:
                 result = run_agent(q["question"], provider, model, tools, args.max_steps, args.token_budget).to_dict()
                 try:
-                    j = judge_answer(judge, judge_model, q, result["answer"]) if result["stopped"] != "error" else \
+                    j = judge_answer(judge, judge_model, q, result["answer"], tools.docs) if result["stopped"] != "error" else \
                         {"verdict": "ungraded", "reason": result["error"], "input_tokens": 0, "output_tokens": 0}
                 except ProviderError as e:
                     j = {"verdict": "ungraded", "reason": f"judge failed: {e}", "input_tokens": 0, "output_tokens": 0}

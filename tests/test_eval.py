@@ -18,9 +18,30 @@ class VerdictParsingTests(unittest.TestCase):
         v, _ = parse_verdict('Here you go:\n```json\n{"verdict": "Partial", "reason": "missing x"}\n```')
         self.assertEqual(v, "partial")
 
+    def test_truncated_reply_still_yields_the_verdict(self):
+        v, _ = parse_verdict('{"verdict": "correct", "reason": "The candidate gives the same essential solution as the ref')
+        self.assertEqual(v, "correct")
+
     def test_garbage_is_ungraded_not_a_crash(self):
         self.assertEqual(parse_verdict("no idea")[0], "ungraded")
         self.assertEqual(parse_verdict('{"verdict": "great"}')[0], "ungraded")
+
+
+class JudgeTests(unittest.TestCase):
+    Q = {"id": "q1", "question": "How?", "expected_pages": ["a.md"], "reference": "Do X."}
+
+    def test_prompt_includes_source_pages_and_unparseable_reply_is_retried(self):
+        judge = FakeProvider([LLMResponse("", [], 10, 0, "end_turn"),
+                              LLMResponse('{"verdict": "correct", "reason": "ok"}', [], 20, 5, "end_turn")])
+        out = judge_answer(judge, "m", self.Q, "Do X.", {"a.md": "SOURCE TEXT HERE"})
+        self.assertEqual(out["verdict"], "correct")
+        self.assertEqual(len(judge.calls), 2)
+        self.assertIn("SOURCE TEXT HERE", judge.calls[0]["messages"][0]["content"])
+        self.assertEqual((out["input_tokens"], out["output_tokens"]), (30, 5))
+
+    def test_two_failures_give_ungraded(self):
+        judge = FakeProvider([LLMResponse("", [], 1, 0, ""), LLMResponse("nope", [], 1, 0, "")])
+        self.assertEqual(judge_answer(judge, "m", self.Q, "Do X.")["verdict"], "ungraded")
 
 
 class GradingTests(unittest.TestCase):
@@ -90,6 +111,25 @@ class EndToEndTests(unittest.TestCase):
         self.assertEqual(data["summaries"]["fake:cand / headings"]["accuracy_answerable"], 0.75)
         self.assertEqual(data["summaries"]["fake:cand / headings"]["citation_hit"], 1.0)
         self.assertIn("misses add_task", md)
+
+    def test_regrade_rejudges_saved_answers(self):
+        from evals import regrade
+        record = {"config": "fake:cand / headings", "answer": "Answer [advanced/events.md]", "cited": ["advanced/events.md"],
+                  "retrieved": ["advanced/events.md"], "steps": [{"step": 1, "kind": "answer"}],
+                  "row": {"id": "q01", "question": "q", "verdict": "ungraded", "latency_s": 1.0, "cost_usd": 0.01,
+                          "input_tokens": 10, "output_tokens": 5, "stopped": "answered", "model_calls": 1}}
+        judge = FakeProvider([LLMResponse('{"verdict": "correct", "reason": "fine"}', [], 40, 5, "end_turn")])
+        with tempfile.TemporaryDirectory() as tmp:
+            run_file = Path(tmp) / "run.json"
+            run_file.write_text(json.dumps({"meta": {}, "summaries": {}, "records": [record]}))
+            argv = ["regrade", str(run_file), "--judge", "fake:judge", "--out", tmp]
+            with mock.patch.object(regrade, "make_provider", lambda spec: (judge, "judge")), \
+                    mock.patch.object(sys, "argv", argv):
+                regrade.main()
+            data = json.loads(next(Path(tmp).glob("regraded-*.json")).read_text())
+        row = data["rows"]["fake:cand / headings"][0]
+        self.assertEqual((row["verdict"], row["previous_verdict"]), ("correct", "ungraded"))
+        self.assertEqual(data["summaries"]["fake:cand / headings"]["accuracy_answerable"], 1.0)
 
 
 if __name__ == "__main__":

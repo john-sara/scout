@@ -42,7 +42,11 @@ TOOL_SPECS = [
                        "search result looks right but you need more detail.",
         "input_schema": {
             "type": "object",
-            "properties": {"path": {"type": "string", "description": "Page path as shown in search results."}},
+            "properties": {
+                "path": {"type": "string", "description": "Page path as shown in search results."},
+                "offset": {"type": "integer", "description": "Character position to start from. Long pages are returned "
+                                                             "in parts; use the offset given in the truncation note to continue."},
+            },
             "required": ["path"],
         },
     },
@@ -152,10 +156,14 @@ class DocTools:
             hint = f" Did you mean one of: {', '.join(close)}?" if close else " Use list_pages or search_docs to find paths."
             return ToolResult(f"ERROR: no page at {path!r}.{hint}", True)
         text = self.docs[path]
-        note = ""
-        if len(text) > MAX_PAGE_CHARS:
-            text, note = text[:MAX_PAGE_CHARS], f"\n\n[truncated: page continues, showing first {MAX_PAGE_CHARS} characters]"
-        return ToolResult(text + note, pages=[path])
+        offset = max(0, int(args.get("offset", 0) or 0))
+        end = offset + MAX_PAGE_CHARS
+        part, note = text[offset:end], ""
+        if offset >= len(text):
+            return ToolResult(f"ERROR: offset {offset} is past the end of the page ({len(text)} characters).", True)
+        if end < len(text):
+            note = f"\n\n[showing characters {offset}-{end} of {len(text)}; call read_page again with offset={end} to continue]"
+        return ToolResult(part + note, pages=[path])
 
     def _list(self, args: dict) -> ToolResult:
         prefix = str(args.get("prefix", "")).lstrip("/")
